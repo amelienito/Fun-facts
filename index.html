@@ -2,220 +2,29 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Vrai ou Faux ?</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --ink:#0e0c0a; --paper:#e9e1cf; --bone:#cfc4ab; --dim:#7d7462;
-    --blood:#c2410c; --moss:#5f7a3a; --line:rgba(233,225,207,.18);
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{height:100%}
-  body{
-    background:var(--ink); color:var(--paper);
-    font-family:"IM Fell English",Georgia,serif;
-    display:flex; flex-direction:column; align-items:center;
-    min-height:100vh; overflow-x:hidden; padding:0 16px;
-  }
-  /* grain */
-  body::before{
-    content:""; position:fixed; inset:0; pointer-events:none; z-index:50; opacity:.13;
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-  header{width:100%;max-width:560px;padding:28px 0 8px;text-align:center}
-  .presents{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.25em;color:var(--dim);text-transform:uppercase}
-  h1{font-family:"IM Fell English SC",serif;font-weight:400;font-size:clamp(44px,12vw,72px);line-height:.95;margin-top:10px;letter-spacing:.02em}
-  h1 em{font-style:italic;color:var(--blood);font-family:"IM Fell English",serif}
-  .sub{color:var(--bone);font-style:italic;margin-top:8px;font-size:17px}
-
-  .hud{width:100%;max-width:560px;display:flex;justify-content:space-between;
-    font-family:"Space Mono",monospace;font-size:12px;color:var(--dim);
-    border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 2px;margin:18px 0 22px}
-  .hud b{color:var(--paper);font-weight:700}
-
-  .stage{width:100%;max-width:560px;perspective:1400px;flex:1}
-  .card{position:relative;width:100%;min-height:340px;transform-style:preserve-3d;transition:transform .7s cubic-bezier(.2,.8,.2,1)}
-  .card.flipped{transform:rotateY(180deg)}
-  .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;
-    border:1px solid var(--line);padding:30px 26px;display:flex;flex-direction:column;
-    background:linear-gradient(180deg,#16130f,#0f0d0b)}
-  .face::after{content:"";position:absolute;inset:7px;border:1px solid rgba(233,225,207,.07);pointer-events:none}
-  .num{font-family:"Space Mono",monospace;font-size:11px;color:var(--dim);letter-spacing:.2em}
-  .fact{font-size:clamp(23px,6vw,30px);line-height:1.25;margin:auto 0;padding:18px 0}
-  .back{transform:rotateY(180deg)}
-  .verdict{font-family:"IM Fell English SC",serif;font-size:clamp(46px,13vw,64px);line-height:1}
-  .verdict.vrai{color:var(--moss)} .verdict.faux{color:var(--blood)}
-  .you{font-family:"Space Mono",monospace;font-size:12px;color:var(--dim);margin-top:6px;letter-spacing:.1em}
-  .expl{font-size:19px;line-height:1.4;color:var(--bone);margin:18px 0 auto}
-  .src{font-family:"Space Mono",monospace;font-size:11px;color:var(--dim);margin-top:16px}
-
-  .btns{width:100%;max-width:560px;display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:22px 0}
-  button{font-family:"IM Fell English SC",serif;font-size:24px;padding:16px 10px;cursor:pointer;
-    background:transparent;color:var(--paper);border:1px solid var(--line);transition:all .15s}
-  button:hover{border-color:var(--paper);background:rgba(233,225,207,.04)}
-  button:active{transform:translateY(1px)}
-  #btnVrai:hover{color:var(--moss);border-color:var(--moss)}
-  #btnFaux:hover{color:var(--blood);border-color:var(--blood)}
-  #btnNext{grid-column:1/-1;display:none}
-  .answered #btnVrai,.answered #btnFaux{display:none}
-  .answered #btnNext{display:block}
-
-  .end{text-align:center;padding:40px 0}
-  .end .big{font-family:"IM Fell English SC",serif;font-size:80px;line-height:1}
-  .end p{color:var(--bone);font-style:italic;font-size:20px;margin:14px 0 26px}
-  footer{font-family:"Space Mono",monospace;font-size:10px;color:var(--dim);padding:20px 0 28px;letter-spacing:.15em;text-transform:uppercase}
-
-  .shake{animation:shake .4s}
-  @keyframes shake{25%{transform:translateX(-6px)}50%{transform:translateX(6px)}75%{transform:translateX(-3px)}}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fun facts</title>
+<meta name="description" content="Un cabinet de curiosités à remplir de faits vérifiés, avec leurs sources.">
+<meta name="theme-color" content="#0F4D50">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230F4D50'/%3E%3Cpath d='M8 24V14a8 8 0 0 1 16 0v10z' fill='%23E4F7F4' fill-opacity='.35' stroke='%23E9C062' stroke-width='2'/%3E%3Crect x='6' y='24' width='20' height='4' rx='1' fill='%23C9952F'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/gravitas-one.woff" as="font" type="font/woff" crossorigin>
+<link rel="preload" href="fonts/literata.woff" as="font" type="font/woff" crossorigin>
+<link rel="stylesheet" href="style.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.js" } }</script>
 </head>
 <body>
-<header>
-  <div class="presents">OSB Corporation présente :</div>
-  <h1>Vrai <em>ou</em> Faux&nbsp;?</h1>
-  <div class="sub">Des fun facts. Certains sont des mensonges.</div>
+<header class="barre" id="barre" hidden>
+  <button class="marque" id="btn-accueil" type="button">Fun facts</button>
+  <p class="ou" id="ou"></p>
+  <button class="compteur" id="btn-cabinet" type="button" aria-label="Ouvrir mon cabinet">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M3 4h18v16H3z M3 12h18 M9 4v8 M15 12v8" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+    <span id="compte">0/0</span>
+  </button>
 </header>
-
-<div class="hud">
-  <span>Fait <b id="idx">1</b>/<span id="total">0</span></span>
-  <span>Score <b id="score">0</b></span>
-  <span>Série <b id="streak">0</b></span>
-</div>
-
-<main id="game">
-  <div class="stage">
-    <div class="card" id="card">
-      <div class="face front">
-        <div class="num" id="numF">N° 001</div>
-        <div class="fact" id="factText"></div>
-      </div>
-      <div class="face back">
-        <div class="verdict" id="verdict"></div>
-        <div class="you" id="you"></div>
-        <div class="expl" id="expl"></div>
-        <div class="src" id="src"></div>
-      </div>
-    </div>
-  </div>
-  <div class="btns" id="btns">
-    <button id="btnVrai">Vrai</button>
-    <button id="btnFaux">Faux</button>
-    <button id="btnNext">Suivant →</button>
-  </div>
-</main>
-
-
-<script>
-const FACTS = [
-  {t:"Les wombats font des crottes cubiques.", v:true,
-   e:"Leurs intestins ont des zones plus ou moins élastiques qui façonnent des petits cubes. Ça les aide à marquer leur territoire sans que ça roule.", s:"Soft Matter, 2021"},
-  {t:"On n'utilise que 10 % de notre cerveau.", v:false,
-   e:"L'imagerie cérébrale montre que pratiquement toutes les zones servent. Le mythe tient surtout parce qu'il est flatteur.", s:"Neurosciences, consensus"},
-  {t:"Cléopâtre a vécu plus près de l'invention de l'iPhone que de la construction de la grande pyramide de Gizeh.", v:true,
-   e:"Pyramide : vers -2560. Cléopâtre : morte en -30. iPhone : 2007. Environ 2 500 ans d'un côté, 2 000 de l'autre.", s:"Chronologie"},
-  {t:"La Grande Muraille de Chine est visible à l'œil nu depuis l'espace.", v:false,
-   e:"Elle est très longue mais très étroite, et de la même couleur que le sol. Même les astronautes chinois ne l'ont pas vue.", s:"NASA"},
-  {t:"Les pieuvres ont trois cœurs.", v:true,
-   e:"Deux pour les branchies, un pour le reste du corps. Et leur sang est bleu, pour ajouter au mystère.", s:"Biologie marine"},
-  {t:"Les poissons rouges ont une mémoire de trois secondes.", v:false,
-   e:"Ils retiennent des informations pendant des mois et peuvent être dressés. C'est plutôt nous qui oublions de changer l'eau.", s:"Études comportementales"},
-  {t:"L'université d'Oxford est plus ancienne que l'Empire aztèque.", v:true,
-   e:"On y enseigne depuis 1096. Tenochtitlan est fondée en 1325.", s:"Université d'Oxford"},
-  {t:"Napoléon était particulièrement petit.", v:false,
-   e:"Environ 1,69 m, dans la moyenne de l'époque. Confusion entre pouces français et anglais, plus un peu de propagande britannique.", s:"Historiens"},
-  {t:"Un jour sur Vénus dure plus longtemps qu'une année sur Vénus.", v:true,
-   e:"Vénus met environ 243 jours terrestres à tourner sur elle-même, et 225 à faire le tour du Soleil.", s:"NASA"},
-  {t:"Le rouge rend les taureaux furieux.", v:false,
-   e:"Les taureaux distinguent mal le rouge. C'est le mouvement de la cape qui les énerve. Et accessoirement, le reste de la corrida.", s:"Éthologie"},
-  {t:"Les bananes sont légèrement radioactives.", v:true,
-   e:"À cause du potassium 40 qu'elles contiennent. Il faudrait en manger des millions d'un coup pour que ça pose problème.", s:"Physique nucléaire"},
-  {t:"La foudre ne frappe jamais deux fois au même endroit.", v:false,
-   e:"L'Empire State Building est touché des dizaines de fois par an. La foudre n'a aucun sens de la variété.", s:"NOAA"},
-  {t:"Les requins existent depuis plus longtemps que les arbres.", v:true,
-   e:"Les premiers requins ont environ 450 millions d'années, les premiers arbres environ 385 millions.", s:"Paléontologie"},
-  {t:"Les Vikings portaient des casques à cornes.", v:false,
-   e:"Aucun casque à cornes viking n'a été retrouvé. L'image vient surtout des costumes d'un opéra de Wagner au XIXe siècle.", s:"Archéologie"},
-  {t:"Nintendo a été fondée au XIXe siècle.", v:true,
-   e:"En 1889, à Kyoto, pour fabriquer des cartes à jouer. Mario est arrivé un peu plus tard.", s:"Nintendo"},
-  {t:"Les chauves-souris sont aveugles.", v:false,
-   e:"Elles voient très bien. L'écholocation, c'est un bonus, pas une compensation.", s:"Zoologie"},
-  {t:"L'animal national de l'Écosse est la licorne.", v:true,
-   e:"Officiellement. Elle figure sur les armoiries royales écossaises depuis des siècles.", s:"Gouvernement écossais"},
-  {t:"Le sang est bleu dans nos veines.", v:false,
-   e:"Il est toujours rouge, plus foncé quand il est moins oxygéné. Les veines paraissent bleues à cause de la façon dont la peau filtre la lumière.", s:"Physiologie"},
-  {t:"La tour Eiffel grandit en été.", v:true,
-   e:"Le métal se dilate avec la chaleur : elle peut prendre jusqu'à une quinzaine de centimètres.", s:"Tour Eiffel (SETE)"},
-  {t:"Einstein était nul en maths à l'école.", v:false,
-   e:"Il maîtrisait le calcul différentiel avant 15 ans. La rumeur arrange surtout ceux qui étaient nuls en maths.", s:"Biographies"}
-];
-
-const END_LINES = [
-  [0,  "Impressionnant. Dans l'autre sens."],
-  [6,  "Tu crois tout ce qu'on te raconte au repas de famille."],
-  [11, "Correct. Pas brillant, mais correct."],
-  [15, "Tu es la personne pénible des soirées."],
-  [19, "Tu as triché ou tu n'as pas d'amis. Peut-être les deux."]
-];
-
-const $ = id => document.getElementById(id);
-let deck, i, score, streak;
-
-function shuffle(a){for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a}
-
-function start(){
-  deck = shuffle([...FACTS]); i = 0; score = 0; streak = 0;
-  $('total').textContent = deck.length;
-  $('game').innerHTML = $('game').dataset.tpl || $('game').innerHTML;
-  bind(); show();
-}
-function bind(){
-  $('btnVrai').onclick = () => answer(true);
-  $('btnFaux').onclick = () => answer(false);
-  $('btnNext').onclick = next;
-}
-function show(){
-  const f = deck[i];
-  $('card').classList.remove('flipped');
-  $('btns').classList.remove('answered');
-  $('idx').textContent = i+1;
-  $('score').textContent = score;
-  $('streak').textContent = streak;
-  $('numF').textContent = 'N° ' + String(i+1).padStart(3,'0');
-  setTimeout(()=>{ $('factText').textContent = f.t; }, i ? 250 : 0);
-}
-function answer(guess){
-  const f = deck[i], ok = guess === f.v;
-  if(ok){score++;streak++} else {streak=0; $('card').classList.add('shake'); setTimeout(()=>$('card').classList.remove('shake'),400)}
-  $('verdict').textContent = f.v ? 'Vrai' : 'Faux';
-  $('verdict').className = 'verdict ' + (f.v ? 'vrai' : 'faux');
-  $('you').textContent = ok ? '— bien vu' : '— raté';
-  $('expl').textContent = f.e;
-  $('src').textContent = 'Source : ' + f.s;
-  $('score').textContent = score;
-  $('streak').textContent = streak;
-  setTimeout(()=>$('card').classList.add('flipped'), ok ? 0 : 380);
-  $('btns').classList.add('answered');
-}
-function next(){
-  i++;
-  if(i >= deck.length) return end();
-  show();
-}
-function end(){
-  let line = END_LINES[0][1];
-  for(const [min,l] of END_LINES) if(score >= min) line = l;
-  $('game').innerHTML = `<div class="end">
-    <div class="big">${score}/${deck.length}</div>
-    <p>${line}</p>
-    <div class="btns" style="grid-template-columns:1fr;margin:0 auto"><button id="again">Rejouer</button></div>
-  </div>`;
-  $('again').onclick = start;
-}
-
-$('game').dataset.tpl = $('game').innerHTML;
-start();
-</script>
+<main id="ecran" class="ecran"></main>
+<dialog id="cabinet" aria-label="Ton cabinet"></dialog>
+<dialog id="fiche" aria-label="Fiche d'inventaire"></dialog>
+<noscript><p class="sans-js">Ce site a besoin de JavaScript pour ouvrir le cabinet.</p></noscript>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>
