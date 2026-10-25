@@ -228,7 +228,7 @@ export function miniature(id) {
     if (!mini) {
       const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
       renderer.setPixelRatio(1);
-      renderer.setSize(320, 320, false);
+      renderer.setSize(420, 420, false);
       const scene = new THREE.Scene();
       eclairer(scene);
       mini = { renderer, scene, camera: new THREE.PerspectiveCamera(26, 1, 0.1, 60) };
