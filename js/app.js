@@ -280,7 +280,7 @@ function poserQuestion(s, qi, zones) {
     reponses,
     resultat
   );
-  if (qi > 0) focaliser(etiquette.querySelector("h2"));
+  focaliser(etiquette.querySelector("h2"));
 
   reponses.addEventListener("click", (e) => {
     const b = e.target.closest("button");
