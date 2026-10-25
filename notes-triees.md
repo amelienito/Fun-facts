@@ -1,5 +1,20 @@
 # Notes triées — fun facts
 
+## Statut au 25 octobre 2026
+
+**Sur le site (42 notes, toutes vérifiées et sourcées) :** coucou, hiboux, pizzly, dragonnier, cachalot, étrier, Tumbler-Snapper, femtoseconde, Farriner, Mélos, FIFA, Dex aïe, statue de l'Unité, Bosch, Böcklin, Droste + Stefaneschi, Beksiński, « Deux fils de pute », Katerine, Zidane, Cage, Trump, McLain, Mouthwashing, For Honor, Squirrel with a Gun, Justin.tv, baseball (162), Around the World, Best of Both Worlds, David Ritz, La Zoubida, glabre, laudatif, bérézina, noosphère, poioumenon, manicule, eigengrau, astronaute/taïkonaute, albanais, charolais.
+
+**Corrigé en vérifiant :** Mélos est une colonie spartiate (pas Sparte) · MLB = 162 matchs (pas 160) · Ellen McLain prête sa voix dans Pacific Rim, elle n'y apparaît pas · « Dex aïe » est le cri de guerre des Normands (pas trouvé comme devise de Rouen) · Speedrun Hitman : Silent Assassin.
+
+**Pas encore sur le site :**
+- Pas de source fiable trouvée : chien de Squeezie, chien d'Alpha 5.20, Booba à l'Urban Peace, RMAK, LEJ, catégorie « Only Sleeping » sur Twitch, « Speed » = « Fart » au Canada, kiosquiers (source Sylvain), Gee Bees.
+- En attente de tes images : Freddie Gibbs et ses sosies, Jok'Air et Brigitte Macron, Uzi et Sarkozy, Malèna, Michel Leeb, « Qui a pris cette photo ? », liste d'animaux de @manonbrilcuah.
+- À compléter : gens de Grenoble (à vérifier un par un), Jammin' (comptage à faire), Düsseldorf (seule l'Allemagne en a une ?), intuitivité, tiret demi-cadratin, Nessie, Ankylosaurus, 21:9, Simpsonwave, section G.
+- Mis de côté : Ricardo López (histoire trop sombre pour le ton du site, à rediscuter).
+- Rubrique actu à part : Rivoire / Canal+, reel Mouv' sur le RN, quiz propagande.
+
+---
+
 Légende : ⚠️ = erreur probable repérée avant la grosse vérification · 🔍 = à vérifier · 📎 = source donnée par Amélien (à conserver)
 
 Les 5 facts gardés de la V1 : Cerveau 10 % (F), Cléopâtre / iPhone (V), Requins / arbres (V), Nintendo XIXe (V), Tour Eiffel grandit (V).

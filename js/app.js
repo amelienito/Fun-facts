@@ -226,7 +226,7 @@ function afficherAccueil() {
 
 function commencer() {
   if (!choixCats.size) return;
-  visite = { cats: new Set(choixCats), vues: [], bonnes: 0, total: 0, archives: false };
+  visite = { cats: new Set(choixCats), vues: [], bonnes: 0, total: 0, archives: false, archivesVues: 0, momentsVus: new Set() };
   const dispo = SALLES.filter((s) => visite.cats.has(s.cat));
   afficherSalle(melanger(dispo)[0].id, null);
 }
@@ -344,7 +344,8 @@ function poserQuestion(s, qi, zones) {
 }
 
 function blocSources(sources) {
-  const uniques = sources.filter((src, i) => sources.findIndex((x) => x.url === src.url) === i);
+  const cle = (src) => src.url || src.nom + src.titre;
+  const uniques = sources.filter((src, i) => sources.findIndex((x) => cle(x) === cle(src)) === i);
   return h(
     "section",
     { class: "sources" },
@@ -356,7 +357,7 @@ function blocSources(sources) {
         h(
           "li",
           null,
-          h("a", { href: src.url, target: "_blank", rel: "noopener" }, src.nom),
+          src.url ? h("a", { href: src.url, target: "_blank", rel: "noopener" }, src.nom) : h("strong", null, src.nom),
           h("span", { class: "titre-src" }, src.titre)
         )
       )
@@ -425,7 +426,7 @@ function ouvrirPorte(btn, c) {
   btn.dataset.ouverte = "1";
   btn.classList.add("ouverte");
   const suite = () => {
-    if (visite.vues.length >= 3 && !visite.archives) afficherArchives(() => afficherSalle(c.salle.id, c.lien));
+    if (visite.vues.length % 5 === 3 && visite.archivesVues < Math.ceil(visite.vues.length / 5)) afficherArchives(() => afficherSalle(c.salle.id, c.lien));
     else afficherSalle(c.salle.id, c.lien);
   };
   setTimeout(suite, reduit() ? 0 : 560);
@@ -435,7 +436,9 @@ function ouvrirPorte(btn, c) {
 
 function choisirFrise() {
   const vues = new Set(visite ? visite.vues : []);
-  const tri = melanger(FRISE).sort((a, b) => (vues.has(b.salle) ? 1 : 0) - (vues.has(a.salle) ? 1 : 0));
+  const dejaVus = visite ? visite.momentsVus : new Set();
+  const pool = FRISE.filter((it) => !dejaVus.has(it.id));
+  const tri = melanger(pool.length >= 4 ? pool : FRISE).sort((a, b) => (vues.has(b.salle) ? 1 : 0) - (vues.has(a.salle) ? 1 : 0));
   const pris = [];
   const annees = new Set();
   for (const it of tri) {
@@ -445,11 +448,13 @@ function choisirFrise() {
     annees.add(an);
     if (pris.length === 4) break;
   }
+  if (visite) pris.forEach((it) => visite.momentsVus.add(it.id));
   return pris;
 }
 
 function afficherArchives(suite) {
   visite.archives = true;
+  visite.archivesVues++;
   majBarre("Salle des archives");
   const items = choisirFrise();
   const ordre = items.slice().sort((a, b) => a.date - b.date);

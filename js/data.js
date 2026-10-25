@@ -1,6 +1,8 @@
 // Contenu du site. Pour ajouter une salle : copier un bloc de SALLES et l'adapter.
 // Chaque salle = un objet du cabinet + une salve de questions + ses sources.
 
+import { SALLES_NOTES, FRISE_NOTES } from "./notes.js";
+
 export const VERIFIE_LE = "2026-10-25";
 
 export const CATEGORIES = [
@@ -8,9 +10,9 @@ export const CATEGORIES = [
   { id: "histoire", nom: "Histoire" },
   { id: "nature", nom: "Nature" },
   { id: "pop", nom: "Pop culture" },
-  { id: "musique", nom: "Musique", bientot: true },
-  { id: "mots", nom: "Mots rares", bientot: true },
-  { id: "art", nom: "Art", bientot: true },
+  { id: "art", nom: "Art" },
+  { id: "musique", nom: "Musique" },
+  { id: "mots", nom: "Mots rares" },
 ];
 
 const SRC = {
@@ -66,7 +68,7 @@ const SRC = {
   },
 };
 
-export const SALLES = [
+const SALLES_BASE = [
   {
     id: "cerveau",
     inventaire: 1,
@@ -229,7 +231,7 @@ export const SALLES = [
 ];
 
 // Moments datés pour la salle des archives (frise).
-export const FRISE = [
+const FRISE_BASE = [
   { id: "ecailles", texte: "Les plus anciennes écailles de requin connues", date: -450e6, affichage: "il y a environ 450 millions d'années", salle: "requins", source: SRC.nhm },
   { id: "foret", texte: "La plus ancienne forêt fossile connue", date: -386e6, affichage: "il y a environ 386 millions d'années", salle: "requins", source: SRC.foret },
   { id: "pyramide", texte: "L'achèvement de la grande pyramide de Gizeh", date: -2500, affichage: "début du XXVe siècle av. J.-C.", salle: "cleopatre", source: SRC.britPyr },
@@ -239,3 +241,10 @@ export const FRISE = [
   { id: "cartes1902", texte: "Les premières cartes à jouer occidentales fabriquées au Japon", date: 1902, affichage: "1902", salle: "nintendo", source: SRC.ninHist },
   { id: "iphone", texte: "La présentation du premier iPhone", date: 2007, affichage: "2007", salle: "cleopatre", source: SRC.apple },
 ];
+
+export const SALLES = [
+  ...SALLES_BASE,
+  ...SALLES_NOTES.map((salle, i) => ({ inventaire: SALLES_BASE.length + i + 1, ...salle })),
+];
+
+export const FRISE = [...FRISE_BASE, ...FRISE_NOTES];
