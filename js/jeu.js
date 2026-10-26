@@ -536,17 +536,30 @@ function blocPortes(s, bande) {
 
 function suivant(id) {
   // Un intermède toutes les 4 questions, si on a déjà assez de faits trouvés pour le nourrir.
-  if (partie && partie.n > 0 && partie.n % 4 === 0 && partie.n < partie.total && new Set(affirmationsPossibles().map((a) => a.id)).size >= 4) {
-    const dispo = [afficherMenteur, afficherEclair, afficherPlusOuMoins, afficherPaires];
-    const jeu = dispo[(partie.decalage + partie.intermedes++) % dispo.length];
-    jeu(() => afficherFait(id));
-  } else afficherFait(id);
+  // Les intermèdes ne piochent que dans les faits déjà trouvés, jamais dans celui qui arrive juste après.
+  if (partie && partie.n > 0 && partie.n % 4 === 0 && partie.n < partie.total) {
+    const tous = [
+      [afficherEclair, new Set(affirmationsPossibles(id).map((a) => a.id)).size >= 4],
+      [afficherPlusOuMoins, nombresVus(id).length >= 4],
+      [afficherPaires, pairesVues(id).length >= 3],
+    ];
+    const dispo = tous.filter(([, ok]) => ok).map(([f]) => f);
+    if (dispo.length) {
+      const jeu = dispo[(partie.decalage + partie.intermedes++) % dispo.length];
+      jeu(() => afficherFait(id), id);
+      return;
+    }
+  }
+  afficherFait(id);
 }
 
-/* ---------- Intermèdes : Le menteur et Éclair ---------- */
+/* ---------- Intermèdes : Éclair, Plus ou moins, Les paires ---------- */
+
+const nombresVus = (exclu) => NOMBRES.filter((n) => etat.trouves[n.id] && n.id !== exclu);
+const pairesVues = (exclu) => PAIRES.filter((p) => etat.trouves[p.id] && p.id !== exclu);
 
 // Une affirmation = une question déjà trouvée + une réponse proposée (la bonne ou une fausse).
-const affirmationsPossibles = () => Object.keys(etat.trouves).filter((id) => salleParId[id]).flatMap((id) => QUESTIONS[id].filter((q) => q.type === "qcm").map((q) => ({ id, q })));
+const affirmationsPossibles = (exclu) => Object.keys(etat.trouves).filter((id) => salleParId[id] && id !== exclu).flatMap((id) => QUESTIONS[id].filter((q) => q.type === "qcm").map((q) => ({ id, q })));
 function affirmation({ id, q }, vraie) {
   const fausses = q.choix.filter((_, i) => i !== q.reponse);
   return { id, question: q.texte, prop: vraie ? q.choix[q.reponse] : melanger(fausses)[0], bonne: q.choix[q.reponse], vraie };
@@ -555,43 +568,10 @@ function carteAffirmation(a) {
   return [h("span", { class: "a-q" }, a.question), h("span", { class: "a-p" }, a.prop)];
 }
 
-function afficherMenteur(ensuite) {
-  const tirage = melanger(affirmationsPossibles()).filter((x, i, t) => t.findIndex((y) => y.id === x.id) === i).slice(0, 3);
-  const faux = Math.floor(Math.random() * 3);
-  const items = tirage.map((t, i) => affirmation(t, i !== faux));
-  const b = nouvelleBande("intermede");
-  const zone = h("div", { class: "affirmations" });
-  const fin = h("div");
-  items.forEach((a, i) => {
-    zone.append(h("button", { class: "affirmation", type: "button", onclick: () => {
-      if (zone.classList.contains("fini")) return;
-      zone.classList.add("fini");
-      const juste = !a.vraie;
-      [...zone.children].forEach((c, k) => {
-        c.disabled = true;
-        c.classList.add(items[k].vraie ? "vraie" : "fausse");
-        if (!items[k].vraie) c.append(h("span", { class: "a-corr" }, `Mensonge. La bonne réponse : ${items[k].bonne}`));
-      });
-      const r = zone.getBoundingClientRect();
-      if (juste) { combo++; SONS.juste(combo); confettis(innerWidth / 2, r.top + 40, ["#15131A", "#FBF5E9", "#FFC93C"]); gagner(1250, innerWidth / 2, r.top); if (partie) { partie.score += 1250; partie.bonnes++; } }
-      else { combo = 0; SONS.faux(); zone.classList.add("secoue"); gagner(100); if (partie) partie.score += 100; }
-      if (partie) partie.questions++;
-      vider(fin, h("p", { class: "verdict" }, h("b", null, juste ? "Démasqué." : "Il t'a eu."), h("span", { class: "gain" }, juste ? "+1 250 points" : "+100 points")),
-        h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
-    } }, carteAffirmation(a)));
-  });
-  vider(b,
-    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "+1 250")),
-    h("h1", { class: "question", tabindex: "-1" }, "Le menteur"),
-    h("p", { class: "consigne" }, "Ces trois réponses viennent de faits que tu as trouvés. Une seule est fausse : touche-la."),
-    zone, fin);
-  allerA(b);
-}
 
 // Plus ou moins : un chiffre connu, un chiffre caché. Le caché est-il plus grand ou plus petit ?
-function afficherPlusOuMoins(ensuite) {
-  const vus = NOMBRES.filter((n) => etat.trouves[n.id]);
-  const pool = melanger(vus.length >= 4 ? vus : NOMBRES);
+function afficherPlusOuMoins(ensuite, exclu) {
+  const pool = melanger(nombresVus(exclu));
   const chaine = pool.slice(0, Math.min(6, pool.length));
   const MANCHES = chaine.length - 1;
   const b = nouvelleBande("intermede inter-pom");
@@ -640,9 +620,8 @@ function afficherPlusOuMoins(ensuite) {
 }
 
 // Les paires : relier chaque mot à sa définition.
-function afficherPaires(ensuite) {
-  const vus = PAIRES.filter((p) => etat.trouves[p.id]);
-  const lot = melanger(vus.length >= 4 ? vus : PAIRES).slice(0, 4);
+function afficherPaires(ensuite, exclu) {
+  const lot = melanger(pairesVues(exclu)).slice(0, 4);
   const b = nouvelleBande("intermede inter-paires");
   let choisi = null, erreurs = 0, faites = 0;
   const fin = h("div");
@@ -681,9 +660,9 @@ function afficherPaires(ensuite) {
   allerA(b);
 }
 
-function afficherEclair(ensuite) {
+function afficherEclair(ensuite, exclu) {
   const DUREE = 25;
-  const tirees = melanger(affirmationsPossibles()).slice(0, 8);
+  const tirees = melanger(affirmationsPossibles(exclu)).slice(0, 8);
   const items = melanger(tirees.map((t, k) => affirmation(t, k < Math.ceil(tirees.length / 2))));
   const reponses = [];
   const b = nouvelleBande("intermede eclair");
@@ -812,53 +791,51 @@ function finPartie() {
 
 /* ---------- La célébration : air horn et canon à confettis ---------- */
 
-// Air horn : scies détunées, saturées, puis le fameux « BWAAA BWA BWA BWAAAAA ».
-function airHorn(debut = 0, coups = [[0, 0.45], [0.52, 0.13], [0.7, 0.13], [0.88, 1.1]], puissance = 1) {
+// Air horn de la culture meme (MLG) : une anche criarde, une seule note, coupée net. « BWAP BWAP BWAAAP ».
+function airHorn(debut = 0, coups = [[0, 0.17], [0.23, 0.17], [0.46, 0.5]], puissance = 1) {
   if (!etat.son) return;
   try {
     const a = ctx();
     const sature = a.createWaveShaper();
-    const courbe = new Float32Array(1024);
-    for (let k = 0; k < 1024; k++) { const x = (k / 512) - 1; courbe[k] = Math.tanh(x * 3.2); }
+    const courbe = new Float32Array(2048);
+    for (let k = 0; k < 2048; k++) { const x = (k / 1024) - 1; courbe[k] = Math.tanh(x * 6); }
     sature.curve = courbe;
-    const passe = a.createBiquadFilter();
-    passe.type = "peaking"; passe.frequency.value = 1800; passe.gain.value = 7; passe.Q.value = 1.2;
-    sature.connect(passe).connect(sortie);
+    const brillance = a.createBiquadFilter();
+    brillance.type = "peaking"; brillance.frequency.value = 2600; brillance.gain.value = 9; brillance.Q.value = 0.9;
+    const coupeBas = a.createBiquadFilter();
+    coupeBas.type = "highpass"; coupeBas.frequency.value = 220;
+    const sortieHorn = a.createGain(); sortieHorn.gain.value = 0.55 * puissance;
+    sature.connect(brillance).connect(coupeBas).connect(sortieHorn).connect(sortie);
+    const F = 415;
     for (const [t0, d] of coups) {
       const t = a.currentTime + debut + t0;
       const g = a.createGain();
-      const v = 0.9 * puissance;
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(v, t + 0.015);
-      g.gain.setValueAtTime(v, t + d - 0.06);
+      g.gain.exponentialRampToValueAtTime(1, t + 0.008);
+      g.gain.setValueAtTime(1, t + d - 0.015);
       g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      // Battement de l'anche.
+      const lfo = a.createOscillator(), prof = a.createGain();
+      lfo.frequency.value = 28; prof.gain.value = 0.18;
+      lfo.connect(prof).connect(g.gain);
+      lfo.start(t); lfo.stop(t + d + 0.02);
       g.connect(sature);
-      for (const f of [311, 370, 415, 466, 622]) {
-        for (const det of [-14, 0, 14]) {
-          const o = a.createOscillator();
-          o.type = "sawtooth";
-          o.frequency.setValueAtTime(f * 0.9, t);
-          o.frequency.exponentialRampToValueAtTime(f, t + 0.05);
-          o.detune.value = det;
-          const og = a.createGain(); og.gain.value = 0.09;
-          o.connect(og).connect(g);
-          o.start(t);
-          o.stop(t + d + 0.02);
-        }
+      for (const [type, det, vol] of [["sawtooth", -18, 0.32], ["sawtooth", 16, 0.32], ["square", 0, 0.22], ["sawtooth", 1200, 0.12]]) {
+        const o = a.createOscillator();
+        o.type = type;
+        o.frequency.setValueAtTime(F * 0.82, t);
+        o.frequency.exponentialRampToValueAtTime(F, t + 0.035);
+        o.frequency.setValueAtTime(F, t + d - 0.04);
+        o.frequency.exponentialRampToValueAtTime(F * 0.94, t + d);
+        o.detune.value = det;
+        const og = a.createGain(); og.gain.value = vol;
+        o.connect(og).connect(g);
+        o.start(t); o.stop(t + d + 0.02);
       }
-    }
-    // Grosse caisse sous la fanfare.
-    const fin = coups[coups.length - 1][0];
-    for (const t0 of [...coups.map((c) => c[0]), fin + 0.3, fin + 0.45, fin + 0.6]) {
-      const t = a.currentTime + debut + t0;
-      const o = a.createOscillator(), g = a.createGain();
-      o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.2);
-      g.gain.setValueAtTime(0.9 * puissance, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
-      o.connect(g).connect(sortie); o.start(t); o.stop(t + 0.3);
     }
   } catch (_) { /* pas de son */ }
 }
-const miniHorn = () => airHorn(0, [[0, 0.12], [0.16, 0.38]], 0.7);
+const miniHorn = () => airHorn(0, [[0, 0.24]], 0.8);
 
 function canonConfettis(intensite) {
   if (reduit()) return;
@@ -895,7 +872,7 @@ function canonConfettis(intensite) {
 }
 
 // Un énorme texte qui traverse l'écran.
-function banniere(texte, sous = "", duree = 1400) {
+function banniere(texte, sous = "", duree = 1100) {
   const el = h("div", { class: "banniere", "aria-hidden": "true", style: `animation-duration:${duree}ms` }, h("b", null, texte), sous ? h("span", null, sous) : null);
   document.body.append(el);
   setTimeout(() => el.remove(), duree);
@@ -904,18 +881,16 @@ function banniere(texte, sous = "", duree = 1400) {
 function celebrer(ratio, record) {
   const intensite = 0.9 + ratio * 1.2 + (record ? 0.5 : 0);
   airHorn();
-  airHorn(1.9);
-  if (ratio >= 0.5 || record) airHorn(3.8);
+  if (ratio >= 0.5 || record) airHorn(1.3);
   canonConfettis(intensite);
-  setTimeout(() => canonConfettis(intensite * 0.8), 1900);
-  if (ratio >= 0.5 || record) setTimeout(() => canonConfettis(intensite), 3800);
+  if (ratio >= 0.5 || record) setTimeout(() => canonConfettis(intensite * 0.8), 1300);
   if (!reduit()) {
     const secouer = () => { document.body.classList.remove("seisme"); void document.body.offsetWidth; document.body.classList.add("seisme"); };
     const flasher = () => { const f = h("div", { class: "flash" }); document.body.append(f); setTimeout(() => f.remove(), 700); };
     secouer(); flasher();
-    setTimeout(() => { secouer(); flasher(); }, 880);
-    setTimeout(() => { secouer(); flasher(); }, 1900 + 880);
-    banniere(record ? "NOUVEAU RECORD" : ratio >= 0.9 ? "LÉGENDAIRE" : ratio >= 0.7 ? "ÉNORME" : ratio >= 0.5 ? "BIEN JOUÉ" : "TERMINÉ", "", 2600);
+    setTimeout(() => { secouer(); flasher(); }, 460);
+    if (ratio >= 0.5 || record) setTimeout(() => { secouer(); flasher(); }, 1760);
+    banniere(record ? "NOUVEAU RECORD" : ratio >= 0.9 ? "LÉGENDAIRE" : ratio >= 0.7 ? "ÉNORME" : ratio >= 0.5 ? "BIEN JOUÉ" : "TERMINÉ", "", 1800);
   }
 }
 

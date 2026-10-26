@@ -98,9 +98,9 @@ export const QUESTIONS = {
     choix: ["Paris", "Londres", "Zurich", "Bruxelles"], reponse: 0,
     explication: "À Paris, le 21 mai 1904, au 229 rue Saint-Honoré. La France, la Belgique, le Danemark, les Pays-Bas et la Suisse étaient présents ; l'Angleterre ne l'a rejointe qu'en 1905.",
   }, {
-    type: "qcm", texte: "Le sigle « FIFA » est tiré de son nom officiel complet. Dans quelle langue est ce nom ?",
-    choix: ["En français", "En anglais", "En allemand", "En latin"], reponse: 0,
-    explication: "En français : Fédération internationale de football association. Un héritage de sa fondation à Paris.",
+    type: "qcm", texte: "Et que veut dire le dernier « A » de FIFA ?",
+    choix: ["Association", "Amateur", "Américaine", "Athlétique"], reponse: 0,
+    explication: "Association : Fédération internationale de football association. Le nom officiel est en français, un héritage de sa fondation à Paris.",
   }],
   dexaie: [{
     type: "qcm", texte: "Que criaient les chevaliers normands en partant au combat ?",
