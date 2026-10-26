@@ -98,7 +98,7 @@ export const QUESTIONS = {
     choix: ["Paris", "Londres", "Zurich", "Bruxelles"], reponse: 0,
     explication: "À Paris, le 21 mai 1904, au 229 rue Saint-Honoré. La France, la Belgique, le Danemark, les Pays-Bas et la Suisse étaient présents ; l'Angleterre ne l'a rejointe qu'en 1905.",
   }, {
-    type: "qcm", texte: "Et dans quelle langue est son nom officiel ?",
+    type: "qcm", texte: "Le sigle « FIFA » est tiré de son nom officiel complet. Dans quelle langue est ce nom ?",
     choix: ["En français", "En anglais", "En allemand", "En latin"], reponse: 0,
     explication: "En français : Fédération internationale de football association. Un héritage de sa fondation à Paris.",
   }],
@@ -289,4 +289,53 @@ export const NIVEAUX = [
   { xp: 22500, nom: "Savant" },
   { xp: 35000, nom: "Encyclopédiste" },
   { xp: 50000, nom: "Oracle" },
+];
+
+// Faits dont l'objet ou la série trahirait la réponse : affichés en « ? » jusqu'à la révélation.
+export const MYSTERES = new Set(["ecureuil", "hiboux"]);
+
+// Frises : les questions à deux choix évidents se jouent sur une ligne du temps.
+// Les choix restent dans l'ordre (gauche, droite). « cache » : le point apparaît après la réponse.
+export const FRISES = {
+  "cleopatre:0": {
+    min: -2500, max: 2007,
+    ordreChoix: [1, 0],
+    gauche: { nom: "Grande pyramide", date: "début du XXVe s. av. J.-C." },
+    droite: { nom: "Premier iPhone", date: "2007" },
+    points: [{ nom: "Cléopâtre", val: -69, date: "naît en 70 ou 69 av. J.-C.", mystere: true }],
+  },
+  "requins:0": {
+    min: -500, max: 0,
+    gauche: { nom: "Il y a 500 millions d'années", date: "" },
+    droite: { nom: "Aujourd'hui", date: "" },
+    points: [
+      { nom: "Requins", val: -450, date: "≈ 450 millions d'années", cache: true },
+      { nom: "Arbres", val: -386, date: "≈ 386 millions d'années (plus vieille forêt fossile)", cache: true },
+    ],
+  },
+};
+
+// Intermède « Plus ou moins » : chiffres tirés des explications déjà vérifiées.
+export const NOMBRES = [
+  { id: "baseball", libelle: "matchs par équipe dans une saison régulière de MLB", val: 162 },
+  { id: "around", libelle: "« Around the world » dans le morceau de Daft Punk", val: 144 },
+  { id: "zoubida", libelle: "semaines de La Zoubida à la première place des ventes", val: 11 },
+  { id: "bocklin", libelle: "versions de L'Île des morts peintes par Böcklin", val: 5 },
+  { id: "statue", libelle: "mètres de haut pour la statue de l'Unité (sans socle)", val: 182 },
+  { id: "ritz", libelle: "autobiographies coécrites par David Ritz", val: 36 },
+  { id: "eiffel", libelle: "centimètres : la courbe que trace le sommet de la tour Eiffel par grand soleil", val: 15 },
+  { id: "requins", libelle: "millions d'années : l'âge des plus anciennes traces de requins", val: 450 },
+  { id: "requins", libelle: "millions d'années : l'âge de la plus vieille forêt fossile connue", val: 386 },
+];
+
+// Intermède « Les paires » : un mot, sa définition.
+export const PAIRES = [
+  { id: "glabre", mot: "Glabre", def: "Sans poils" },
+  { id: "laudatif", mot: "Laudatif", def: "Qui fait l'éloge de quelqu'un" },
+  { id: "berezina", mot: "Bérézina", def: "Un désastre complet" },
+  { id: "noosphere", mot: "Noosphère", def: "La sphère de la pensée humaine" },
+  { id: "poioumenon", mot: "Poioumenon", def: "Une œuvre qui raconte sa propre création" },
+  { id: "manicule", mot: "Manicule", def: "La petite main à l'index tendu ☞" },
+  { id: "eigengrau", mot: "Eigengrau", def: "Le gris que l'œil voit dans le noir total" },
+  { id: "naute", mot: "Spationaute", def: "Astronaute, version française" },
 ];

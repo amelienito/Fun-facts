@@ -1,6 +1,5 @@
 import { SALLES, VERIFIE_LE } from "./data.js";
-import { QUESTIONS, SERIES, PEPITES, NIVEAUX } from "./questions.js";
-import { REACTIONS } from "./reactions.js";
+import { QUESTIONS, SERIES, PEPITES, NIVEAUX, MYSTERES, FRISES, NOMBRES, PAIRES } from "./questions.js";
 import * as nuage from "./nuage.js";
 
 /* ---------- Outils ---------- */
@@ -119,11 +118,40 @@ function imageObjet(objet, cls) {
 
 /* ---------- Sons ---------- */
 
-let audio = null;
+// Tout le son passe par un volume général et un compresseur : plus fort, sans saturer.
+let audio = null, sortie = null;
+function ctx() {
+  if (!audio) {
+    audio = new (window.AudioContext || window.webkitAudioContext)();
+    const comp = audio.createDynamicsCompressor();
+    comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.2;
+    sortie = audio.createGain();
+    sortie.gain.value = 1.6;
+    sortie.connect(comp).connect(audio.destination);
+  }
+  if (audio.state === "suspended") audio.resume();
+  return audio;
+}
+// iPhone : sans ça, le bouton silencieux coupe tout le son du site.
+let deverrouille = false;
+function deverrouillerSon() {
+  if (deverrouille) return;
+  deverrouille = true;
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
+  try {
+    const muet = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=");
+    muet.setAttribute("playsinline", ""); muet.play().catch(() => {});
+  } catch (_) {}
+  try { const a = ctx(); const b = a.createBuffer(1, 1, 22050); const src = a.createBufferSource(); src.buffer = b; src.connect(a.destination); src.start(0); } catch (_) {}
+}
+addEventListener("pointerdown", deverrouillerSon, { capture: true });
+addEventListener("keydown", deverrouillerSon, { capture: true });
+
 function note(freq, debut, duree, type = "sine", vol = 0.16) {
   if (!etat.son) return;
   try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    ctx();
+    vol = Math.min(0.6, vol * 2);
     const t = audio.currentTime + debut;
     const o = audio.createOscillator();
     const g = audio.createGain();
@@ -132,7 +160,7 @@ function note(freq, debut, duree, type = "sine", vol = 0.16) {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t + duree);
-    o.connect(g).connect(audio.destination);
+    o.connect(g).connect(sortie);
     o.start(t);
     o.stop(t + duree + 0.05);
   } catch (_) { /* pas de son, tant pis */ }
@@ -272,12 +300,13 @@ function afficherFait(id, premier) {
   majHud();
   const b = nouvelleBande();
   const serie = serieDe[id];
-  const zoneObjet = h("button", { class: "objet-zone", type: "button", tabindex: "-1", "aria-label": "Contempler l'objet", onclick: () => { if (b.classList.contains("revele")) ouvrirObjet(id); } }, imageObjet(s.objet, "objet"));
+  const mystere = MYSTERES.has(id);
+  const zoneObjet = h("button", { class: mystere ? "objet-zone mystere" : "objet-zone", type: "button", tabindex: "-1", "aria-label": "Contempler l'objet", onclick: () => { if (b.classList.contains("revele")) ouvrirObjet(id); } }, imageObjet(s.objet, "objet"));
   const tete = h("div", { class: "tete" });
   const suite = h("div", { class: "suite", hidden: true });
   vider(b,
     h("div", { class: "etiquettes" },
-      h("span", { class: "etiq" }, serie.nom),
+      mystere ? h("span", { class: "etiq" }, h("span", { class: "nom-cache" }, "Série mystère"), h("span", { class: "nom-vrai" }, serie.nom)) : h("span", { class: "etiq" }, serie.nom),
       estPepite(id) ? h("span", { class: "etiq pepite" }, "Pépite ×2") : null,
       etat.trouves[id] ? h("span", { class: "etiq" }, "Déjà dans ta collection") : null),
     tete, suite);
@@ -289,9 +318,12 @@ function afficherFait(id, premier) {
 function poser(s, qi, z) {
   const q = QUESTIONS[s.id][qi];
   const total = QUESTIONS[s.id].length;
+  const frise = FRISES[`${s.id}:${qi}`];
   const opts = q.type === "vf"
     ? [["Vrai", true], ["Faux", false]]
-    : (q.ordre ? q.choix.map((c, i) => [c, i]) : melanger(q.choix.map((c, i) => [c, i])));
+    : frise?.ordreChoix ? frise.ordreChoix.map((i) => [q.choix[i], i])
+    : (q.ordre || frise ? q.choix.map((c, i) => [c, i]) : melanger(q.choix.map((c, i) => [c, i])));
+  z.frise = frise ? blocFrise(frise) : null;
   const reps = h("p", { class: "reponses" });
   opts.forEach(([lib, val], i) => {
     reps.append(h("button", { class: "rep", type: "button", "data-v": String(val), onclick: (e) => repondre(s, qi, z, reps, e.currentTarget, val) }, lib));
@@ -302,12 +334,26 @@ function poser(s, qi, z) {
     z.zoneObjet,
     total > 1 ? h("p", { class: "q-num" }, `Question ${qi + 1} sur ${total}`) : null,
     h("h1", { class: `question ${q.texte.length > 72 ? "longue" : ""}`, tabindex: "-1" }, q.texte),
+    z.frise,
     reps);
   if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
 }
 
-const LOUANGES = ["Bien vu.", "Exact. Bravo !", "Magistral.", "Impressionnant.", "Légendaire.", "Du jamais vu.", "Hors catégorie."];
-const CHUTES = ["Raté.", "Perdu, mais tu sais maintenant.", "Pas cette fois.", "Aïe."];
+// Une ligne du temps : les bouts sont fixes, les points glissent à leur vraie place après la réponse.
+function blocFrise(f) {
+  const pos = (v) => `${((v - f.min) / (f.max - f.min)) * 100}%`;
+  const ligne = h("div", { class: "frise-ligne" });
+  f.points.forEach((p, k) => {
+    ligne.append(h("div", { class: `frise-point ${p.cache ? "cache" : ""} ${p.mystere ? "mystere" : ""} rang-${k % 2}`, style: `--pos:${pos(p.val)};--align:${(p.val - f.min) / (f.max - f.min) < 0.33 ? "left" : (p.val - f.min) / (f.max - f.min) > 0.67 ? "right" : "center"}` },
+      h("i"), h("span", { class: "fp-txt" }, h("span", { class: "fp-nom" }, p.nom, h("em", null, p.mystere ? " ?" : "")), h("span", { class: "fp-date" }, p.date))));
+  });
+  return h("div", { class: "frise", "aria-hidden": "true" },
+    ligne,
+    h("div", { class: "frise-bouts" },
+      h("span", null, h("b", null, f.gauche.nom), f.gauche.date ? h("small", null, f.gauche.date) : null),
+      h("span", null, h("b", null, f.droite.nom), f.droite.date ? h("small", null, f.droite.date) : null)));
+}
+
 const EXCES = [
   "Plus personne sur Terre ne répond aussi bien que toi en ce moment. (Phrase non vérifiée.)",
   "Les historiens ont été prévenus. (Phrase non vérifiée.)",
@@ -318,6 +364,7 @@ const EXCES = [
 function repondre(s, qi, z, reps, bouton, val) {
   if (reps.classList.contains("fini")) return;
   reps.classList.add("fini");
+  if (z.frise) setTimeout(() => z.frise.classList.add("revelee"), 250);
   const q = QUESTIONS[s.id][qi];
   const juste = val === q.reponse;
   for (const x of reps.querySelectorAll(".rep")) {
@@ -333,6 +380,10 @@ function repondre(s, qi, z, reps, bouton, val) {
     combo++;
     etat.record = Math.max(etat.record, combo);
     SONS.juste(combo);
+    if (combo % 3 === 0) {
+      setTimeout(miniHorn, 120);
+      if (!reduit()) banniere(multiplicateur() < 4 || combo === 9 ? `COMBO ×${multiplicateur()}` : `${combo} D'AFFILÉE`, multiplicateur() < 4 || combo === 9 ? `${combo} bonnes réponses d'affilée` : "Rien ne t'arrête");
+    }
     if (estPepite(s.id)) setTimeout(SONS.pepite, 160);
     confettis(r.left + r.width / 2, r.top + r.height / 2, estPepite(s.id) ? ["#FFC93C", "#FFE08A", "#FFF4D0"] : ["#15131A", "#FBF5E9", "#FFC93C", "#3D5AFE"]);
   } else {
@@ -358,13 +409,11 @@ function repondre(s, qi, z, reps, bouton, val) {
       nuage.compterReponse(cleQ, juste);
     });
   }
-  const react = REACTIONS[`${s.id}:${qi}`];
-  const titre = juste ? LOUANGES[Math.min(LOUANGES.length - 1, Math.max(0, combo - 1))] : CHUTES[Math.floor(Math.random() * CHUTES.length)];
+  const titre = juste ? "Bien vu." : "Raté.";
   const hyper = juste && combo >= 3 ? EXCES[Math.floor(Math.random() * EXCES.length)] : "";
   const lignes = [
     h("p", { class: "verdict" }, h("b", null, titre), statJoueurs, h("span", { class: "gain" }, juste ? `+${gain.toLocaleString("fr-FR")} points${multiplicateur() > 1 && combo > 1 ? ` · combo de ${combo}` : ""}` : `+${gain} points pour avoir appris quelque chose`)),
     hyper ? h("p", { class: "hyper" }, hyper) : null,
-    react ? h("p", { class: "reaction" }, juste ? react.bravo : react.rate) : null,
     h("p", null, q.explication),
   ];
   const total = QUESTIONS[s.id].length;
@@ -488,7 +537,8 @@ function blocPortes(s, bande) {
 function suivant(id) {
   // Un intermède toutes les 4 questions, si on a déjà assez de faits trouvés pour le nourrir.
   if (partie && partie.n > 0 && partie.n % 4 === 0 && partie.n < partie.total && new Set(affirmationsPossibles().map((a) => a.id)).size >= 4) {
-    const jeu = partie.intermedes++ % 2 === 0 ? afficherMenteur : afficherEclair;
+    const dispo = [afficherMenteur, afficherEclair, afficherPlusOuMoins, afficherPaires];
+    const jeu = dispo[(partie.decalage + partie.intermedes++) % dispo.length];
     jeu(() => afficherFait(id));
   } else afficherFait(id);
 }
@@ -538,9 +588,104 @@ function afficherMenteur(ensuite) {
   allerA(b);
 }
 
+// Plus ou moins : un chiffre connu, un chiffre caché. Le caché est-il plus grand ou plus petit ?
+function afficherPlusOuMoins(ensuite) {
+  const vus = NOMBRES.filter((n) => etat.trouves[n.id]);
+  const pool = melanger(vus.length >= 4 ? vus : NOMBRES);
+  const chaine = pool.slice(0, Math.min(6, pool.length));
+  const MANCHES = chaine.length - 1;
+  const b = nouvelleBande("intermede inter-pom");
+  let k = 0, bons = 0;
+  const scene = h("div", { class: "pom" });
+  const fin = h("div");
+  const fmt = (n) => n.val.toLocaleString("fr-FR");
+  const carteN = (n, cache) => h("div", { class: `pom-carte ${cache ? "cachee" : ""}` },
+    h("span", { class: "pom-val" }, cache ? "?" : fmt(n)), h("span", { class: "pom-lib" }, n.libelle));
+  const manche = () => {
+    const a = chaine[k], c = chaine[k + 1];
+    const droite = carteN(c, true);
+    const choix = h("div", { class: "eclair-boutons" });
+    const juger = (plus) => {
+      choix.remove();
+      const ok = plus ? c.val > a.val : c.val < a.val;
+      if (ok) { bons++; SONS.juste(bons); } else { SONS.faux(); droite.classList.add("secoue"); }
+      const v = droite.querySelector(".pom-val");
+      const t0 = performance.now();
+      const anim = (t) => { const p = Math.min(1, (t - t0) / 700); v.textContent = Math.round(c.val * (1 - Math.pow(1 - p, 3))).toLocaleString("fr-FR"); if (p < 1) requestAnimationFrame(anim); };
+      requestAnimationFrame(anim);
+      droite.classList.remove("cachee"); droite.classList.add(ok ? "pom-ok" : "pom-ko");
+      k++;
+      setTimeout(() => (k < MANCHES ? manche() : terminer()), 1500);
+    };
+    vider(choix,
+      h("button", { class: "gros-bouton", type: "button", "data-touche": "v", onclick: () => juger(true) }, "Plus"),
+      h("button", { class: "gros-bouton", type: "button", "data-touche": "f", onclick: () => juger(false) }, "Moins"));
+    vider(scene, h("p", { class: "consigne" }, `Manche ${k + 1} sur ${MANCHES}`), carteN(a), h("p", { class: "pom-vs" }, "contre"), droite, choix);
+  };
+  const terminer = () => {
+    const pts = bons * 500 + (bons === MANCHES ? 2500 : 0);
+    if (bons) gagner(pts, innerWidth / 2, scene.getBoundingClientRect().top + 60);
+    if (partie) { partie.score += pts; partie.questions++; if (bons >= MANCHES / 2) partie.bonnes++; }
+    if (bons === MANCHES) { combo++; confettis(innerWidth / 2, innerHeight / 2, ["#FFC93C", "#FBF5E9", "#15131A"]); }
+    vider(fin, h("p", { class: "verdict" }, h("b", null, bons === MANCHES ? "Sans faute." : `${bons} sur ${MANCHES}.`), h("span", { class: "gain" }, `+${pts.toLocaleString("fr-FR")} points`)),
+      h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
+  };
+  vider(b,
+    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "Sans faute : +2 500")),
+    h("h1", { class: "question", tabindex: "-1" }, "Plus ou moins"),
+    h("p", { class: "consigne" }, "Le chiffre caché est-il plus grand ou plus petit que celui d'au-dessus ?"),
+    scene, fin);
+  manche();
+  allerA(b);
+}
+
+// Les paires : relier chaque mot à sa définition.
+function afficherPaires(ensuite) {
+  const vus = PAIRES.filter((p) => etat.trouves[p.id]);
+  const lot = melanger(vus.length >= 4 ? vus : PAIRES).slice(0, 4);
+  const b = nouvelleBande("intermede inter-paires");
+  let choisi = null, erreurs = 0, faites = 0;
+  const fin = h("div");
+  const mots = h("div", { class: "paires-col" });
+  const defs = h("div", { class: "paires-col" });
+  const clic = (el) => {
+    if (el.classList.contains("fait")) return;
+    if (!choisi || choisi.dataset.cote === el.dataset.cote) {
+      choisi?.classList.remove("choisi"); choisi = el; el.classList.add("choisi"); note(660, 0, 0.06, "triangle", 0.08); return;
+    }
+    const a = choisi; choisi = null; a.classList.remove("choisi");
+    if (a.dataset.k === el.dataset.k) {
+      faites++; a.classList.add("fait"); el.classList.add("fait"); a.disabled = el.disabled = true;
+      SONS.juste(faites);
+      const r = el.getBoundingClientRect(); confettis(r.left + r.width / 2, r.top, ["#FFC93C", "#FBF5E9"]);
+      if (faites === lot.length) terminer();
+    } else {
+      erreurs++; SONS.faux();
+      for (const x of [a, el]) { x.classList.remove("secoue"); void x.offsetWidth; x.classList.add("secoue"); }
+    }
+  };
+  lot.forEach((p, k) => mots.append(h("button", { class: "paire mot", type: "button", "data-k": k, "data-cote": "m", onclick: (e) => clic(e.currentTarget) }, p.mot)));
+  melanger(lot.map((p, k) => [p, k])).forEach(([p, k]) => defs.append(h("button", { class: "paire def", type: "button", "data-k": k, "data-cote": "d", onclick: (e) => clic(e.currentTarget) }, p.def)));
+  const terminer = () => {
+    const pts = Math.max(500, 3000 - erreurs * 500);
+    gagner(pts, innerWidth / 2, mots.getBoundingClientRect().top);
+    if (partie) { partie.score += pts; partie.questions++; if (erreurs <= 2) partie.bonnes++; }
+    vider(fin, h("p", { class: "verdict" }, h("b", null, erreurs ? pluriel(erreurs, "erreur", "erreurs") + "." : "Sans faute."), h("span", { class: "gain" }, `+${pts.toLocaleString("fr-FR")} points`)),
+      h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
+  };
+  vider(b,
+    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "Jusqu'à +3 000")),
+    h("h1", { class: "question", tabindex: "-1" }, "Les paires"),
+    h("p", { class: "consigne" }, "Touche un mot, puis sa définition."),
+    h("div", { class: "paires" }, mots, defs), fin);
+  allerA(b);
+}
+
 function afficherEclair(ensuite) {
   const DUREE = 25;
-  const items = melanger(affirmationsPossibles()).slice(0, 8).map((t) => affirmation(t, Math.random() < 0.5));
+  const tirees = melanger(affirmationsPossibles()).slice(0, 8);
+  const items = melanger(tirees.map((t, k) => affirmation(t, k < Math.ceil(tirees.length / 2))));
+  const reponses = [];
   const b = nouvelleBande("intermede eclair");
   let i = 0, bons = 0, fini = false, debut = 0, raf = 0;
   const barre = h("i");
@@ -559,12 +704,15 @@ function afficherEclair(ensuite) {
     if (bons) { SONS.juste(bons); gagner(pts, innerWidth / 2, carte.getBoundingClientRect().top); } else SONS.faux();
     if (partie) { partie.score += pts; partie.questions++; if (bons >= items.length / 2) partie.bonnes++; }
     vider(carte, h("span", { class: "a-p" }, bons === items.length ? "Sans faute." : `${bons} sur ${items.length}.`));
+    carte.after(h("ol", { class: "recap" }, items.slice(0, reponses.length).map((a, k) => h("li", { class: reponses[k] ? "ok" : "ko" },
+      h("span", { class: "a-q" }, a.question), h("span", null, a.vraie ? `Vrai : ${a.prop}` : `Faux : pas ${a.prop}, mais ${a.bonne}`)))));
     vider(fin, h("p", { class: "verdict" }, h("b", null, pts ? `+${pts} points` : "Raté."), h("span", { class: "gain" }, `${pluriel(bons, "bonne réponse", "bonnes réponses")} en ${DUREE} secondes max`)),
       h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
   };
   const choisir = (v) => {
     if (fini || !debut) return;
     const ok = v === items[i].vraie;
+    reponses.push(ok);
     if (ok) { bons++; note(880 + bons * 40, 0, 0.1, "triangle", 0.12); } else { note(180, 0, 0.15, "square", 0.06); carte.classList.remove("secoue"); void carte.offsetWidth; carte.classList.add("secoue"); }
     carte.classList.toggle("flash-ok", ok);
     i++;
@@ -601,7 +749,7 @@ const estimation = (n) => { const min = Math.max(1, Math.round((n * 25) / 60)); 
 function nouvellePartie(total) {
   etat.longueur = total;
   sauver();
-  partie = { total: Math.min(total, TOTAL), n: 0, score: 0, bonnes: 0, questions: 0, comboMax: 0, gagnes: [], joues: new Set(), intermedes: 0,
+  partie = { total: Math.min(total, TOTAL), n: 0, score: 0, bonnes: 0, questions: 0, comboMax: 0, gagnes: [], joues: new Set(), intermedes: 0, decalage: Math.floor(Math.random() * 4),
     seriesAvant: Object.fromEntries(SERIES.map((x) => [x.id, x.ids.filter((id) => etat.trouves[id]).length])) };
   combo = 0;
   const depart = choisirDepart();
@@ -664,44 +812,53 @@ function finPartie() {
 
 /* ---------- La célébration : air horn et canon à confettis ---------- */
 
-function airHorn(debut = 0) {
+// Air horn : scies détunées, saturées, puis le fameux « BWAAA BWA BWA BWAAAAA ».
+function airHorn(debut = 0, coups = [[0, 0.45], [0.52, 0.13], [0.7, 0.13], [0.88, 1.1]], puissance = 1) {
   if (!etat.son) return;
   try {
-    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-    const coups = [[0, 0.42], [0.5, 0.12], [0.66, 0.12], [0.82, 0.95]];
+    const a = ctx();
+    const sature = a.createWaveShaper();
+    const courbe = new Float32Array(1024);
+    for (let k = 0; k < 1024; k++) { const x = (k / 512) - 1; courbe[k] = Math.tanh(x * 3.2); }
+    sature.curve = courbe;
+    const passe = a.createBiquadFilter();
+    passe.type = "peaking"; passe.frequency.value = 1800; passe.gain.value = 7; passe.Q.value = 1.2;
+    sature.connect(passe).connect(sortie);
     for (const [t0, d] of coups) {
-      const t = audio.currentTime + debut + t0;
-      const filtre = audio.createBiquadFilter();
-      filtre.type = "lowpass"; filtre.frequency.value = 2600; filtre.Q.value = 6;
-      const g = audio.createGain();
+      const t = a.currentTime + debut + t0;
+      const g = a.createGain();
+      const v = 0.9 * puissance;
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.11, t + 0.02);
-      g.gain.setValueAtTime(0.11, t + d - 0.05);
+      g.gain.exponentialRampToValueAtTime(v, t + 0.015);
+      g.gain.setValueAtTime(v, t + d - 0.06);
       g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      filtre.connect(g).connect(audio.destination);
-      for (const f of [233, 294, 349, 466]) {
-        for (const det of [-9, 9]) {
-          const o = audio.createOscillator();
+      g.connect(sature);
+      for (const f of [311, 370, 415, 466, 622]) {
+        for (const det of [-14, 0, 14]) {
+          const o = a.createOscillator();
           o.type = "sawtooth";
-          o.frequency.setValueAtTime(f * 1.06, t);
-          o.frequency.exponentialRampToValueAtTime(f, t + 0.06);
+          o.frequency.setValueAtTime(f * 0.9, t);
+          o.frequency.exponentialRampToValueAtTime(f, t + 0.05);
           o.detune.value = det;
-          o.connect(filtre);
+          const og = a.createGain(); og.gain.value = 0.09;
+          o.connect(og).connect(g);
           o.start(t);
           o.stop(t + d + 0.02);
         }
       }
     }
     // Grosse caisse sous la fanfare.
-    for (const t0 of [0, 0.5, 0.66, 0.82, 1.3, 1.45]) {
-      const t = audio.currentTime + debut + t0;
-      const o = audio.createOscillator(), g = audio.createGain();
-      o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.18);
-      g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
-      o.connect(g).connect(audio.destination); o.start(t); o.stop(t + 0.25);
+    const fin = coups[coups.length - 1][0];
+    for (const t0 of [...coups.map((c) => c[0]), fin + 0.3, fin + 0.45, fin + 0.6]) {
+      const t = a.currentTime + debut + t0;
+      const o = a.createOscillator(), g = a.createGain();
+      o.frequency.setValueAtTime(160, t); o.frequency.exponentialRampToValueAtTime(38, t + 0.2);
+      g.gain.setValueAtTime(0.9 * puissance, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.26);
+      o.connect(g).connect(sortie); o.start(t); o.stop(t + 0.3);
     }
   } catch (_) { /* pas de son */ }
 }
+const miniHorn = () => airHorn(0, [[0, 0.12], [0.16, 0.38]], 0.7);
 
 function canonConfettis(intensite) {
   if (reduit()) return;
@@ -737,16 +894,28 @@ function canonConfettis(intensite) {
   requestAnimationFrame(boucle);
 }
 
+// Un énorme texte qui traverse l'écran.
+function banniere(texte, sous = "", duree = 1400) {
+  const el = h("div", { class: "banniere", "aria-hidden": "true", style: `animation-duration:${duree}ms` }, h("b", null, texte), sous ? h("span", null, sous) : null);
+  document.body.append(el);
+  setTimeout(() => el.remove(), duree);
+}
+
 function celebrer(ratio, record) {
-  const intensite = 0.6 + ratio * 0.9 + (record ? 0.3 : 0);
+  const intensite = 0.9 + ratio * 1.2 + (record ? 0.5 : 0);
   airHorn();
-  if (ratio >= 0.7 || record) airHorn(1.6);
+  airHorn(1.9);
+  if (ratio >= 0.5 || record) airHorn(3.8);
   canonConfettis(intensite);
+  setTimeout(() => canonConfettis(intensite * 0.8), 1900);
+  if (ratio >= 0.5 || record) setTimeout(() => canonConfettis(intensite), 3800);
   if (!reduit()) {
-    document.body.classList.remove("seisme"); void document.body.offsetWidth; document.body.classList.add("seisme");
-    const flash = h("div", { class: "flash" });
-    document.body.append(flash);
-    setTimeout(() => flash.remove(), 700);
+    const secouer = () => { document.body.classList.remove("seisme"); void document.body.offsetWidth; document.body.classList.add("seisme"); };
+    const flasher = () => { const f = h("div", { class: "flash" }); document.body.append(f); setTimeout(() => f.remove(), 700); };
+    secouer(); flasher();
+    setTimeout(() => { secouer(); flasher(); }, 880);
+    setTimeout(() => { secouer(); flasher(); }, 1900 + 880);
+    banniere(record ? "NOUVEAU RECORD" : ratio >= 0.9 ? "LÉGENDAIRE" : ratio >= 0.7 ? "ÉNORME" : ratio >= 0.5 ? "BIEN JOUÉ" : "TERMINÉ", "", 2600);
   }
 }
 
