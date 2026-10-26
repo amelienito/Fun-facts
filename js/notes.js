@@ -55,6 +55,9 @@ const S = {
   politisJim: { nom: "Politis", titre: "« Jim Queen », une prostate salutaire", url: "https://www.politis.fr/articles/2026/06/cinema-nguyen-athane-jim-queen-une-prostate-salutaire/" },
   wikiBeksinski: { nom: "Wikipédia (en)", titre: "Zdzisław Beksiński", url: "https://en.wikipedia.org/wiki/Zdzis%C5%82aw_Beksi%C5%84ski" },
   htNormands: { nom: "History Today", titre: "God and the Normans", url: "https://www.historytoday.com/archive/god-and-normans" },
+  wikiRitz: { nom: "Wikipédia (en)", titre: "David Ritz", url: "https://en.wikipedia.org/wiki/David_Ritz" },
+  wikiMisterV: { nom: "Wikipédia (en)", titre: "Mister V (rapper)", url: "https://en.wikipedia.org/wiki/Mister_V_(rapper)" },
+  wikiFugain: { nom: "Wikipédia", titre: "Michel Fugain", url: "https://fr.wikipedia.org/wiki/Michel_Fugain" },
   reussirCharolais: { nom: "Réussir", titre: "Fromages : le charolais reconnu comme AOP", url: "https://www.reussir.fr/lesmarches/fromages-le-charolais-reconnu-comme-aop" },
 };
 
@@ -273,7 +276,7 @@ export const SALLES_NOTES = [
         explication: "Les boîtes de cacao Droste montraient une infirmière portant un plateau avec une tasse et une boîte identique, sur laquelle on retrouvait la même scène, et ainsi de suite. L'image date du début du XXe siècle ; le terme « effet Droste » a été popularisé à la fin des années 1970 par le chroniqueur néerlandais Nico Scheepmaker.",
       },
     ],
-    saviezVous: "Giotto avait eu l'idée six siècles plus tôt : sur le triptyque Stefaneschi (début du XIVe siècle), le cardinal Stefaneschi est représenté en train d'offrir… le triptyque lui-même.",
+    saviezVous: "Regarde les boucles d'oreilles de la Vache qui rit : ce sont des boîtes de Vache qui rit, avec la vache dessus. Et Giotto avait eu l'idée six siècles plus tôt : sur le triptyque Stefaneschi (début du XIVe siècle), le cardinal Stefaneschi est représenté en train d'offrir… le triptyque lui-même.",
     sources: [S.wikiDroste, S.aleteiaDroste],
     liens: [{ vers: "bosch", porte: "Un autre détail caché dans un tableau" }],
   },
@@ -474,9 +477,9 @@ export const SALLES_NOTES = [
         explication: "David Ritz travaillait avec Marvin Gaye, alors installé en Belgique, sur sa biographie, quand il lui a suggéré l'expression « sexual healing ». Gaye l'a remercié sur l'album Midnight Love (1982). Ritz n'a obtenu son crédit de coauteur, aux côtés de Gaye et d'Odell Brown, qu'après un procès réglé avec la succession du chanteur.",
       },
     ],
-    saviezVous: "La biographie qu'il préparait est parue sous le titre Divided Soul: The Life of Marvin Gaye.",
+    saviezVous: "Ritz a coécrit 36 autobiographies, dont celles de Ray Charles, B.B. King, Etta James, Janet Jackson ou Willie Nelson. Sa biographie de Marvin Gaye s'intitule Divided Soul.",
     note: "Le rôle exact de Ritz reste discuté : selon une autre version, Gaye aurait écrit seul les paroles, en s'inspirant du titre proposé par Ritz.",
-    sources: [S.asRitz, S.wikiDivided],
+    sources: [S.asRitz, S.wikiRitz, S.wikiDivided],
     liens: [{ vers: "bestof", porte: "Un autre duo, beaucoup moins tendre" }],
   },
   {
@@ -490,6 +493,14 @@ export const SALLES_NOTES = [
     ],
     sources: [S.wikiZoubida],
     liens: [{ vers: "around", porte: "Une autre chanson répétitive" }],
+  },
+
+  {
+    id: "grenoble", cat: "musique", objet: "vinyle:vert", nom: "Disque grenoblois",
+    porte: "Deux artistes, une même ville",
+    questions: [],
+    sources: [S.wikiFugain, S.wikiMisterV],
+    liens: [{ vers: "zoubida", porte: "Un tube des années 1990" }],
   },
 
   /* ---------- Mots rares ---------- */

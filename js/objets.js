@@ -632,7 +632,7 @@ function manette(variante) {
 }
 
 function vinyle(variante) {
-  const couleurs = { bleu: 0x2c5f9e, or: 0xc9952f, rouge: 0xb3262e, rose: 0xe58fb0 };
+  const couleurs = { bleu: 0x2c5f9e, or: 0xc9952f, rouge: 0xb3262e, rose: 0xe58fb0, vert: 0x3f8a5a };
   const g = new THREE.Group();
   const poch = m(new THREE.BoxGeometry(1.1, 1.1, 0.04), mat(couleurs[variante] || 0x2c5f9e), -0.12, 0.62, -0.1);
   poch.rotation.z = 0.04;

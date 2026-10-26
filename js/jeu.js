@@ -1,5 +1,6 @@
 import { SALLES, VERIFIE_LE } from "./data.js";
 import { QUESTIONS, SERIES, PEPITES, NIVEAUX } from "./questions.js";
+import * as nuage from "./nuage.js";
 
 /* ---------- Outils ---------- */
 
@@ -59,11 +60,29 @@ const etat = (() => {
     longueur: e.longueur || 10,
     proposerDuree: !!e.proposerDuree,
     meilleurs: e.meilleurs || {},
+    code: e.code || "",
   };
 })();
+let minuterieNuage = 0;
+const progression = () => ({ trouves: etat.trouves, pistes: etat.pistes, xp: etat.xp, record: etat.record, meilleurs: etat.meilleurs });
 const sauver = () => {
   try { localStorage.setItem(CLE, JSON.stringify(etat)); } catch (_) { /* navigation privée : la partie reste valable pour cette visite */ }
+  // Avec un code de sauvegarde, la progression part aussi en ligne (regroupée toutes les 2 secondes).
+  if (nuage.actif && etat.code) {
+    clearTimeout(minuterieNuage);
+    minuterieNuage = setTimeout(() => nuage.ecrireSauvegarde(etat.code, progression()).catch(() => {}), 2000);
+  }
 };
+// Fusionne une progression venue d'un autre appareil : on garde le meilleur des deux.
+function fusionner(d) {
+  if (!d || typeof d !== "object") return false;
+  for (const [id, v] of Object.entries(d.trouves || {})) if (!etat.trouves[id]) etat.trouves[id] = v;
+  for (const id of d.pistes || []) if (!etat.pistes.includes(id)) etat.pistes.push(id);
+  etat.xp = Math.max(etat.xp, d.xp || 0);
+  etat.record = Math.max(etat.record, d.record || 0);
+  for (const [k, v] of Object.entries(d.meilleurs || {})) etat.meilleurs[k] = Math.max(etat.meilleurs[k] || 0, v);
+  return true;
+}
 const nbTrouves = () => Object.keys(etat.trouves).filter((id) => salleParId[id]).length;
 
 /* ---------- Miniatures 3D (chargées à la demande) ---------- */
@@ -319,8 +338,17 @@ function repondre(s, qi, z, reps, bouton, val) {
     partie.comboMax = Math.max(partie.comboMax, combo);
   }
 
+  const statJoueurs = h("span", { class: "stat-joueurs" });
+  if (nuage.actif) {
+    const cleQ = `${s.id}:${qi}`;
+    nuage.statsDe(cleQ).then((st) => {
+      if (st && st.total >= 5) statJoueurs.textContent = `${Math.round((st.justes / st.total) * 100)} % des joueurs ont trouvé`;
+      else if (st) statJoueurs.textContent = "Tu fais partie des premiers à répondre";
+      nuage.compterReponse(cleQ, juste);
+    });
+  }
   const lignes = [
-    h("p", { class: "verdict" }, h("b", null, juste ? "Bien vu." : "Raté."), h("span", { class: "gain" }, juste ? `+${gain} points${multiplicateur() > 1 && combo > 1 ? ` · combo de ${combo}` : ""}` : `+${gain} points pour avoir appris quelque chose`)),
+    h("p", { class: "verdict" }, h("b", null, juste ? "Bien vu." : "Raté."), statJoueurs, h("span", { class: "gain" }, juste ? `+${gain} points${multiplicateur() > 1 && combo > 1 ? ` · combo de ${combo}` : ""}` : `+${gain} points pour avoir appris quelque chose`)),
     h("p", null, q.explication),
   ];
   const total = QUESTIONS[s.id].length;
@@ -740,6 +768,7 @@ function ouvrirCollection() {
   vider(dlg,
     tete("Ta collection", `${n} sur ${TOTAL} · ${Math.round((n / TOTAL) * 100)} % du terrier · record de combo : ${etat.record}`, dlg),
     h("div", { class: "progression" }, h("i", { style: `width:${(n / TOTAL) * 100}%` })),
+    nuage.actif ? blocSauvegarde(dlg) : null,
     h("div", { class: "t-corps" }, SERIES.map((serie) => {
       const nS = serie.ids.filter((id) => etat.trouves[id]).length;
       return h("section", { class: `serie-bloc ${nS === serie.ids.length ? "complete" : ""}` },
@@ -753,6 +782,46 @@ function ouvrirCollection() {
         })));
     })));
   if (!dlg.open) dlg.showModal();
+}
+
+function blocSauvegarde(dlg) {
+  if (etat.code) {
+    const copier = h("button", { class: "lien-texte", type: "button", onclick: async () => {
+      try { await navigator.clipboard.writeText(nuage.afficherCode(etat.code)); toast("Code ", h("b", null, "copié")); } catch (_) { toast("Note ton code : ", h("b", null, nuage.afficherCode(etat.code))); }
+    } }, "Copier");
+    return h("section", { class: "sauvegarde" },
+      h("p", null, "Ton code de sauvegarde : ", h("b", { class: "code" }, nuage.afficherCode(etat.code)), " ", copier),
+      h("p", { class: "aide-sauvegarde" }, "Tape-le sur ton autre appareil pour y retrouver ta collection. Ta progression est enregistrée en ligne à chaque réponse."));
+  }
+  const champ = h("input", { class: "champ-code", type: "text", inputmode: "text", autocomplete: "off", autocapitalize: "characters", placeholder: "XXXX-XXXX", "aria-label": "Code de sauvegarde", maxlength: "9" });
+  const message = h("p", { class: "aide-sauvegarde", "aria-live": "polite" });
+  const recuperer = h("button", { class: "lien-texte", type: "button", onclick: async () => {
+    const code = nuage.normaliserCode(champ.value);
+    if (code.length !== 8) { message.textContent = "Un code fait 8 caractères, par exemple K7PM-3QXA."; return; }
+    message.textContent = "Recherche…";
+    try {
+      const d = await nuage.lireSauvegarde(code);
+      if (!d) { message.textContent = "Aucune sauvegarde avec ce code. Vérifie les lettres."; return; }
+      fusionner(d);
+      etat.code = code;
+      sauver();
+      majHud(["btn-collection"]);
+      toast("Collection récupérée : ", h("b", null, `${nbTrouves()}/${TOTAL}`));
+      ouvrirCollection();
+    } catch (_) { message.textContent = "Connexion impossible pour l'instant. Réessaie dans un moment."; }
+  } }, "Récupérer");
+  const creer = h("button", { class: "gros-bouton", type: "button", onclick: async () => {
+    etat.code = nuage.nouveauCode();
+    try { await nuage.ecrireSauvegarde(etat.code, progression()); } catch (_) { etat.code = ""; message.textContent = "Connexion impossible pour l'instant. Réessaie dans un moment."; return; }
+    sauver();
+    ouvrirCollection();
+  } }, "Créer mon code de sauvegarde");
+  return h("section", { class: "sauvegarde" },
+    h("p", null, h("b", null, "Retrouve ta collection sur tous tes appareils.")),
+    creer,
+    h("p", { class: "aide-sauvegarde" }, "Tu as déjà un code ? "),
+    h("div", { class: "ligne-code" }, champ, recuperer),
+    message);
 }
 
 function ouvrirPistes() {
@@ -834,6 +903,9 @@ addEventListener("keydown", (e) => {
 appliquerTypo();
 appliquerSon();
 majHud();
+if (nuage.actif && etat.code) {
+  nuage.lireSauvegarde(etat.code).then((d) => { if (fusionner(d)) { sauver(); majHud(); } }).catch(() => {});
+}
 if (etat.proposerDuree) {
   const b = nouvelleBande("fin-partie");
   vider(b,

@@ -87,16 +87,24 @@ export const QUESTIONS = {
     type: "qcm", texte: "Où le Grand Incendie de Londres a-t-il démarré, en 1666 ?",
     choix: ["Dans une boulangerie", "Dans une taverne", "Dans une église", "Sur un navire du port"], reponse: 0,
     explication: "Dans la boulangerie de Thomas Farriner, sur Pudding Lane. Ce boulanger était connu pour avoir fourni du pain à la Royal Navy.",
+  }, {
+    type: "qcm", texte: "Et qui a été pendu pour avoir déclenché l'incendie ?",
+    choix: ["Un horloger français", "Le boulanger lui-même", "Un marin hollandais", "Personne"], reponse: 0,
+    explication: "Robert Hubert, un horloger français, qui avait avoué. Farriner et ses enfants ont signé l'acte d'accusation. Pourtant, Hubert n'est arrivé en Angleterre que deux jours après le début du feu. Il est pendu le 27 octobre 1666.",
   }],
   melos: [{
-    type: "qcm", texte: "En 416 av. J.-C., pourquoi Athènes a-t-elle rasé l'île de Mélos ?",
-    choix: ["Elle voulait rester neutre", "Elle avait coulé un navire athénien", "Elle cachait un traître", "Une épidémie en était partie"], reponse: 0,
-    explication: "Elle voulait rester neutre et refusait de se soumettre : ses habitants plaidaient la neutralité et en appelaient à la justice. Athènes a assiégé l'île, tué les hommes et réduit les femmes et les enfants en esclavage.",
+    type: "qcm", texte: "En 416 av. J.-C., l'île de Mélos veut rester neutre et en appelle à la justice. Que lui répond Athènes, selon Thucydide ?",
+    choix: ["La justice ne vaut qu'entre égaux", "Un oracle a ordonné votre chute", "Vos ancêtres ont trahi Athènes", "Payez et vous serez épargnés"], reponse: 0,
+    explication: "« La justice ne vaut qu'entre égaux » : les forts font ce qu'ils peuvent, les faibles subissent ce qu'ils doivent. Mélos refuse de se soumettre. Athènes assiège l'île, tue les hommes et réduit les femmes et les enfants en esclavage. Le Loup et l'Agneau, version antique.",
   }],
   fifa: [{
     type: "qcm", texte: "Dans quelle ville la FIFA a-t-elle été fondée, en 1904 ?",
     choix: ["Paris", "Londres", "Zurich", "Bruxelles"], reponse: 0,
     explication: "À Paris, le 21 mai 1904, au 229 rue Saint-Honoré. La France, la Belgique, le Danemark, les Pays-Bas et la Suisse étaient présents ; l'Angleterre ne l'a rejointe qu'en 1905.",
+  }, {
+    type: "qcm", texte: "Et dans quelle langue est son nom officiel ?",
+    choix: ["En français", "En anglais", "En allemand", "En latin"], reponse: 0,
+    explication: "En français : Fédération internationale de football association. Un héritage de sa fondation à Paris.",
   }],
   dexaie: [{
     type: "qcm", texte: "Que criaient les chevaliers normands en partant au combat ?",
@@ -203,6 +211,11 @@ export const QUESTIONS = {
     choix: ["1", "4", "11", "25"], reponse: 2,
     explication: "11 semaines, non consécutives, en 1991. La chanson a aussi été certifiée disque de platine.",
   }],
+  grenoble: [{
+    type: "qcm", texte: "Qu'ont en commun le chanteur Michel Fugain et le vidéaste Mister V ?",
+    choix: ["Ils sont nés à Grenoble", "Ils sont cousins", "Ils sont demi-frères", "Ils sont nés à Marseille"], reponse: 0,
+    explication: "Ils sont nés à Grenoble, à deux générations d'écart : Mister V, de son vrai nom Yvick Letexier, y est né le 14 août 1993.",
+  }],
   glabre: [{
     type: "qcm", texte: "Que veut dire « glabre » ?",
     choix: ["Sans poils", "Très pâle", "Collant", "Timide"], reponse: 0,
@@ -239,9 +252,9 @@ export const QUESTIONS = {
     explication: "Un gris très foncé, appelé eigengrau (« gris intrinsèque » en allemand). Même sans lumière, le nerf optique continue de transmettre des signaux : une sorte de bruit de fond visuel.",
   }],
   naute: [{
-    type: "qcm", texte: "Comment appelle-t-on, en français, un astronaute chinois ?",
-    choix: ["Un taïkonaute", "Un cosmonaute", "Un spationaute", "Un sinonaute"], reponse: 0,
-    explication: "Un taïkonaute. On parle surtout d'astronautes pour les Américains, de cosmonautes pour les Russes et de spationautes pour les Français.",
+    type: "qcm", texte: "Astronaute pour les Américains, cosmonaute pour les Russes… et pour les Français ?",
+    choix: ["Spationaute", "Taïkonaute", "Aéronaute", "Stellonaute"], reponse: 0,
+    explication: "Spationaute. Et pour les Chinois, on parle de taïkonaute. Selon le Larousse, ces distinctions s'effacent avec les équipages internationaux, et « astronaute » s'impose de plus en plus pour tout le monde.",
   }],
   albanais: [{
     type: "qcm", texte: "Qu'est-ce qui sépare les deux grands dialectes de l'albanais ?",
@@ -265,7 +278,7 @@ export const SERIES = [
   { id: "ecrans", nom: "Écrans", ids: ["quebec", "katerine", "cage", "trump", "mclain"] },
   { id: "manettes", nom: "Manettes", ids: ["mouthwashing", "forhonor", "ecureuil", "justin", "nintendo"] },
   { id: "stades", nom: "Stades", ids: ["zidane", "baseball", "fifa"] },
-  { id: "disques", nom: "Disques", ids: ["around", "bestof", "ritz", "zoubida"] },
+  { id: "disques", nom: "Disques", ids: ["around", "bestof", "ritz", "zoubida", "grenoble"] },
   { id: "mots", nom: "Dictionnaire", ids: ["glabre", "laudatif", "berezina", "noosphere", "poioumenon", "manicule", "naute", "albanais", "charolais"] },
 ];
 

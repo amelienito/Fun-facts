@@ -377,3 +377,13 @@ dialog.objet-dlg { background: radial-gradient(ellipse at 50% 40%, #fff6e0, #f1e
 @media (min-width: 820px) { dialog.objet-dlg { width: min(860px, calc(100% - 48px)); } }
 .bande { scroll-margin-top: 50px; }
 .intermede .verdict { margin-top: 28px; }
+.stat-joueurs { font-weight: 600; font-size: 0.95rem; opacity: 0.8; }
+.stat-joueurs:empty { display: none; }
+.sauvegarde { margin: 14px 18px 4px; padding: 16px 18px; border-radius: 20px; background: #ece4d3; }
+.sauvegarde p { margin: 0 0 10px; }
+.sauvegarde .gros-bouton { --texte: var(--nuit); --fond: var(--creme); font-size: 1rem; padding: 12px 18px; margin-bottom: 12px; }
+.sauvegarde .code { font-family: var(--titre); font-weight: var(--titre-graisse); font-size: 1.5rem; letter-spacing: 0.05em; }
+.aide-sauvegarde { font-size: 0.95rem; opacity: 0.8; }
+.ligne-code { display: flex; gap: 12px; align-items: center; }
+.champ-code { width: 9.5em; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--nuit); background: var(--creme); font: 700 1.1rem var(--corps); letter-spacing: 0.08em; text-transform: uppercase; }
+.sauvegarde .code { white-space: nowrap; }
