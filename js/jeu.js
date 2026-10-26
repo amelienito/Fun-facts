@@ -937,7 +937,7 @@ function finPartie() {
   setTimeout(() => celebrer(ratio, record), reduit() ? 0 : 500);
   // Le score monte comme dans une borne d'arcade.
   const t0 = performance.now(), duree = reduit() ? 1 : 1800;
-  const monte = (t) => { const k = Math.min(1, (t - t0) / duree); score.textContent = Math.round(p.score * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(monte); };
+  const monte = (t) => { const k = Math.min(1, Math.max(0, (t - t0) / duree)); score.textContent = Math.round(p.score * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(monte); };
   requestAnimationFrame(monte);
 }
 
