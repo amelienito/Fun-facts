@@ -280,9 +280,14 @@ function allerA(b) {
 // Faits jouables : d'abord ceux pas encore trouvés, puis (pour rejouer) ceux déjà trouvés.
 const dejaJoue = (id) => partie && partie.joues.has(id);
 function candidats(sauf) {
-  const neufs = SALLES.filter((x) => x.id !== sauf && !etat.trouves[x.id] && !dejaJoue(x.id));
-  const revus = melanger(SALLES.filter((x) => x.id !== sauf && etat.trouves[x.id] && !dejaJoue(x.id)));
-  return { neufs, revus };
+  // On évite d'abord les faits déjà joués et ceux déjà vus dans un intermède ;
+  // s'il n'en reste pas assez (longues parties), seuls les faits réellement joués sont exclus.
+  const tirer = (exclure) => ({
+    neufs: SALLES.filter((x) => x.id !== sauf && !etat.trouves[x.id] && !exclure(x.id)),
+    revus: melanger(SALLES.filter((x) => x.id !== sauf && etat.trouves[x.id] && !exclure(x.id))),
+  });
+  const strict = tirer((id) => dejaJoue(id) || (partie && partie.inter.has(id)));
+  return strict.neufs.length + strict.revus.length >= 2 ? strict : tirer(dejaJoue);
 }
 function choisirDepart() {
   const pistes = etat.pistes.filter((id) => !etat.trouves[id] && salleParId[id] && !dejaJoue(id));
@@ -681,7 +686,7 @@ function suivant(id) {
 
 /* ---------- Intermèdes : Éclair, Plus ou moins, Les paires ---------- */
 
-const marquerJoues = (ids) => { if (partie) for (const i of ids) partie.joues.add(i); };
+const marquerJoues = (ids) => { if (partie) for (const i of ids) partie.inter.add(i); };
 const nombresVus = (exclu) => NOMBRES.filter((n) => etat.trouves[n.id] && n.id !== exclu);
 const pairesVues = (exclu) => PAIRES.filter((p) => etat.trouves[p.id] && p.id !== exclu);
 
@@ -865,7 +870,7 @@ const estimation = (n) => { const min = Math.max(1, Math.round((n * 25) / 60)); 
 function nouvellePartie(total) {
   etat.longueur = total;
   sauver();
-  partie = { total: Math.min(total, TOTAL), n: 0, score: 0, bonnes: 0, questions: 0, comboMax: 0, gagnes: [], joues: new Set(), intermedes: 0, decalage: Math.floor(Math.random() * 4),
+  partie = { total: Math.min(total, TOTAL), n: 0, score: 0, bonnes: 0, questions: 0, comboMax: 0, gagnes: [], joues: new Set(), inter: new Set(), intermedes: 0, decalage: Math.floor(Math.random() * 4),
     seriesAvant: Object.fromEntries(SERIES.map((x) => [x.id, x.ids.filter((id) => etat.trouves[id]).length])) };
   combo = 0;
   const depart = choisirDepart();
