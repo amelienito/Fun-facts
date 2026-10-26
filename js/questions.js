@@ -188,6 +188,15 @@ export const QUESTIONS = {
     choix: ["Justin.tv", "Ustream", "Dailymotion", "Livestream"], reponse: 0,
     explication: "Justin.tv. Twitch en était la catégorie « jeux vidéo », qui attirait plus de spectateurs que toutes les autres réunies. Elle est devenue un service à part en 2011.",
   }],
+  eswc: [{
+    type: "qcm", texte: "En quelle année la Coupe du monde des jeux vidéo (ESWC) a-t-elle organisé son premier tournoi de Counter-Strike 100 % féminin ?", ordre: true,
+    choix: ["2003", "2009", "2015", "2021"], reponse: 0,
+    explication: "En 2003, dès la toute première édition de l'ESWC : huit équipes invitées, du 8 au 13 juillet.",
+  }, {
+    type: "qcm", texte: "Et où se jouait-il ?",
+    choix: ["Au Futuroscope, près de Poitiers", "À Séoul", "À Las Vegas", "Au Carrousel du Louvre, à Paris"], reponse: 0,
+    explication: "Au Futuroscope, près de Poitiers. Le tournoi féminin passera ensuite au Carrousel du Louvre, à Paris, en 2005, avec 24 équipes entièrement féminines.",
+  }],
   baseball: [{
     type: "estimer", texte: "Combien de matchs chaque équipe de la MLB joue-t-elle pendant la saison régulière ?",
     min: 50, max: 250, val: 162, tol: 25, unite: "matchs",
@@ -278,7 +287,7 @@ export const SERIES = [
   { id: "histoire", nom: "Histoire", ids: ["farriner", "melos", "dexaie", "cleopatre"] },
   { id: "arts", nom: "Beaux-arts", ids: ["bosch", "bocklin", "droste", "beksinski", "statue"] },
   { id: "ecrans", nom: "Écrans", ids: ["quebec", "katerine", "cage", "trump", "mclain"] },
-  { id: "manettes", nom: "Manettes", ids: ["mouthwashing", "forhonor", "ecureuil", "justin", "nintendo"] },
+  { id: "manettes", nom: "Manettes", ids: ["mouthwashing", "forhonor", "ecureuil", "justin", "nintendo", "eswc"] },
   { id: "stades", nom: "Stades", ids: ["zidane", "baseball", "fifa"] },
   { id: "disques", nom: "Disques", ids: ["around", "bestof", "ritz", "zoubida", "grenoble"] },
   { id: "mots", nom: "Dictionnaire", ids: ["glabre", "laudatif", "berezina", "noosphere", "poioumenon", "manicule", "naute", "albanais", "charolais"] },

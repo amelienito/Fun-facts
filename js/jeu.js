@@ -118,47 +118,46 @@ function imageObjet(objet, cls) {
 /* ---------- Sons ---------- */
 
 // Tout le son passe par un volume général et un compresseur : plus fort, sans saturer.
-let audio = null, sortie = null;
+// Son : un seul contexte audio, sans compresseur (un compresseur peut rester bloqué en silence pour de bon sur iPhone).
+// Dès que le contexte n'est plus « running » (écran verrouillé, appel, écouteurs branchés…), on le jette
+// et on en recrée un neuf au toucher suivant.
+let audio = null, sortie = null, aRecreer = false;
+let hornBuffer = null, hornCharge = null;
 function creerContexte() {
+  try { if (audio && audio.state !== "closed") audio.close(); } catch (_) {}
   audio = new (window.AudioContext || window.webkitAudioContext)();
-  const comp = audio.createDynamicsCompressor();
-  comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.2;
   sortie = audio.createGain();
-  sortie.gain.value = 1.6;
-  sortie.connect(comp).connect(audio.destination);
+  sortie.gain.value = 0.9;
+  sortie.connect(audio.destination);
+  aRecreer = false;
+  audio.onstatechange = () => { if (audio.state !== "running") aRecreer = true; };
+  hornBuffer = null; hornCharge = null;
 }
 function ctx() {
   if (!audio || audio.state === "closed") creerContexte();
   if (audio.state !== "running") audio.resume().catch(() => {});
   return audio;
 }
-// iPhone : le son se coupe quand l'écran se verrouille, qu'on change d'app ou qu'un autre son passe.
-// À chaque toucher, on le réveille ; s'il refuse de repartir, on recrée le contexte audio.
-let premierGeste = true;
 function reveillerSon() {
   try { if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback"; } catch (_) {}
-  if (premierGeste) {
-    premierGeste = false;
-    if (!navigator.audioSession) {
-      try { const muet = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="); muet.setAttribute("playsinline", ""); muet.play().catch(() => {}); } catch (_) {}
-    }
-    setTimeout(chargerHorn, 0);
-  }
+  if (!etat.son) return;
   try {
-    const a = ctx();
+    if (!audio || aRecreer || audio.state === "interrupted" || audio.state === "closed") creerContexte();
+    const a = audio;
+    a.resume().catch(() => {});
     const b = a.createBuffer(1, 1, 22050); const src = a.createBufferSource(); src.buffer = b; src.connect(a.destination); src.start(0);
-    if (a.state !== "running") setTimeout(() => { if (audio && audio.state !== "running") { try { audio.close(); } catch (_) {} creerContexte(); audio.resume().catch(() => {}); } }, 400);
+    chargerHorn();
   } catch (_) {}
 }
 addEventListener("pointerdown", reveillerSon, { capture: true });
 addEventListener("keydown", reveillerSon, { capture: true });
-document.addEventListener("visibilitychange", () => { if (!document.hidden && audio && audio.state !== "running") audio.resume().catch(() => {}); });
+document.addEventListener("visibilitychange", () => { if (document.hidden) aRecreer = true; });
 
 function note(freq, debut, duree, type = "sine", vol = 0.16) {
   if (!etat.son) return;
   try {
     ctx();
-    vol = Math.min(0.6, vol * 2);
+    vol = Math.min(0.45, vol * 1.6);
     const t = audio.currentTime + debut;
     const o = audio.createOscillator();
     const g = audio.createGain();
@@ -860,7 +859,7 @@ function afficherEclair(ensuite, exclu) {
 /* ---------- Parties ---------- */
 
 let partie = null;
-const DUREES = [10, 15, 20, 30, 40, 47];
+const DUREES = [10, 15, 20, 30, 40, TOTAL];
 const estimation = (n) => { const min = Math.max(1, Math.round((n * 25) / 60)); return `≈ ${min} min`; };
 
 function nouvellePartie(total) {
@@ -940,7 +939,6 @@ function finPartie() {
 /* ---------- La célébration : air horn et canon à confettis ---------- */
 
 // Air horn : le vrai son (sons/air-horn.mp3), décodé une fois puis joué via le volume général.
-let hornBuffer = null, hornCharge = null;
 function chargerHorn() {
   if (hornCharge) return hornCharge;
   hornCharge = fetch("sons/air-horn.mp3").then((r) => r.arrayBuffer())
@@ -1147,7 +1145,7 @@ function appliquerSon() {
   b.setAttribute("aria-pressed", String(etat.son));
   b.setAttribute("aria-label", etat.son ? "Couper le son" : "Remettre le son");
 }
-$("btn-son").addEventListener("click", () => { etat.son = !etat.son; sauver(); appliquerSon(); if (etat.son) SONS.porte(); });
+$("btn-son").addEventListener("click", () => { etat.son = !etat.son; sauver(); appliquerSon(); if (etat.son) { creerContexte(); audio.resume().catch(() => {}); SONS.porte(); } });
 
 /* ---------- Clavier : 1 à 4 pour répondre, V et F en Éclair ---------- */
 

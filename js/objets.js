@@ -631,6 +631,27 @@ function manette(variante) {
   return g;
 }
 
+// Souris de joueuse sur son tapis (tournoi Counter-Strike féminin).
+function souris() {
+  const g = new THREE.Group();
+  g.add(m(new THREE.BoxGeometry(1.3, 0.04, 1.0), mat(0x1d1b24), 0, 0.02, 0));
+  g.add(m(new THREE.BoxGeometry(1.22, 0.012, 0.04), mat(0xe0457b), 0, 0.045, 0.45));
+  const s = new THREE.Group();
+  s.add(ellipsoide(0.26, 0.17, 0.4, mat(0x2a2833, { shininess: 60, specular: 0x444444 }), 0, 0.17, 0, 2));
+  s.add(m(new THREE.BoxGeometry(0.012, 0.06, 0.3), mat(0x111111), 0, 0.31, -0.2));
+  const molette = m(new THREE.CylinderGeometry(0.035, 0.035, 0.05, 10), mat(0xe0457b), 0, 0.33, -0.17);
+  molette.rotation.z = PI / 2;
+  s.add(molette);
+  s.add(ellipsoide(0.05, 0.02, 0.2, mat(0xe0457b, { emissive: 0x5a1030 }), 0, 0.19, 0.28, 1));
+  const pts = [new THREE.Vector3(0, 0.12, -0.38), new THREE.Vector3(0, 0.1, -0.5), new THREE.Vector3(0.15, 0.04, -0.58)];
+  s.add(m(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 16, 0.018, 5), mat(0x111111)));
+  s.scale.setScalar(1.55);
+  s.rotation.y = 0.5;
+  g.add(s);
+  g.rotation.x = 0.35;
+  return g;
+}
+
 function vinyle(variante) {
   const couleurs = { bleu: 0x2c5f9e, or: 0xc9952f, rouge: 0xb3262e, rose: 0xe58fb0, vert: 0x3f8a5a };
   const g = new THREE.Group();
@@ -853,7 +874,7 @@ function bouclier() {
 const FABRIQUES = {
   cerveau, pyramide, dent, hanafuda, eiffel, drap, caisse,
   nid, hibou, ours, arbre, cachalot, os, pain, colonne, boulefeu, boite, chrono,
-  ballon, balle, bobine, vhs, micro, manette, vinyle, tableau, statue, livre, fromage, casque, bouclier,
+  ballon, balle, bobine, vhs, micro, manette, souris, vinyle, tableau, statue, livre, fromage, casque, bouclier,
 };
 
 export function construire(id) {
