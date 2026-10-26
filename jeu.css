@@ -218,7 +218,7 @@ html[data-typo="instrument"] .verdict b { font-size: 2.2rem; }
 .confettis { position: absolute; pointer-events: none; left: 0; top: 0; width: 0; height: 0; }
 .confettis i {
   position: absolute; left: 0; top: 0; width: 9px; height: 13px; border-radius: 2px; background: var(--c);
-  animation: eclat 0.9s cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
+  animation: eclat 0.81s cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
 }
 @keyframes eclat {
   0% { transform: translate(0, 0) rotate(0); opacity: 1; }
@@ -587,3 +587,5 @@ dialog.objet-dlg { background: radial-gradient(ellipse at 50% 40%, #fff6e0, #f1e
 .estimer .lb-range-zone { margin-top: 30px; }
 .placer, .estimer { margin-bottom: 8px; }
 .placer .lb-frise { margin-top: 40px; }
+.passer-intermede { display: inline-block; margin: 8px 0 0; font-size: 0.9rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
+.bande.passe { min-height: 0; padding-top: 18px; padding-bottom: 18px; }

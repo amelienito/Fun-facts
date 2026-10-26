@@ -119,33 +119,40 @@ function imageObjet(objet, cls) {
 
 // Tout le son passe par un volume général et un compresseur : plus fort, sans saturer.
 let audio = null, sortie = null;
+function creerContexte() {
+  audio = new (window.AudioContext || window.webkitAudioContext)();
+  const comp = audio.createDynamicsCompressor();
+  comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.2;
+  sortie = audio.createGain();
+  sortie.gain.value = 1.6;
+  sortie.connect(comp).connect(audio.destination);
+}
 function ctx() {
-  if (!audio) {
-    audio = new (window.AudioContext || window.webkitAudioContext)();
-    const comp = audio.createDynamicsCompressor();
-    comp.threshold.value = -14; comp.knee.value = 8; comp.ratio.value = 6; comp.attack.value = 0.003; comp.release.value = 0.2;
-    sortie = audio.createGain();
-    sortie.gain.value = 1.6;
-    sortie.connect(comp).connect(audio.destination);
-  }
-  if (audio.state === "suspended") audio.resume();
+  if (!audio || audio.state === "closed") creerContexte();
+  if (audio.state !== "running") audio.resume().catch(() => {});
   return audio;
 }
-// iPhone : sans ça, le bouton silencieux coupe tout le son du site.
-let deverrouille = false;
-function deverrouillerSon() {
-  if (deverrouille) return;
-  deverrouille = true;
-  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (_) {}
+// iPhone : le son se coupe quand l'écran se verrouille, qu'on change d'app ou qu'un autre son passe.
+// À chaque toucher, on le réveille ; s'il refuse de repartir, on recrée le contexte audio.
+let premierGeste = true;
+function reveillerSon() {
+  try { if (navigator.audioSession && navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback"; } catch (_) {}
+  if (premierGeste) {
+    premierGeste = false;
+    if (!navigator.audioSession) {
+      try { const muet = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="); muet.setAttribute("playsinline", ""); muet.play().catch(() => {}); } catch (_) {}
+    }
+    setTimeout(chargerHorn, 0);
+  }
   try {
-    const muet = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=");
-    muet.setAttribute("playsinline", ""); muet.play().catch(() => {});
+    const a = ctx();
+    const b = a.createBuffer(1, 1, 22050); const src = a.createBufferSource(); src.buffer = b; src.connect(a.destination); src.start(0);
+    if (a.state !== "running") setTimeout(() => { if (audio && audio.state !== "running") { try { audio.close(); } catch (_) {} creerContexte(); audio.resume().catch(() => {}); } }, 400);
   } catch (_) {}
-  setTimeout(chargerHorn, 0);
-  try { const a = ctx(); const b = a.createBuffer(1, 1, 22050); const src = a.createBufferSource(); src.buffer = b; src.connect(a.destination); src.start(0); } catch (_) {}
 }
-addEventListener("pointerdown", deverrouillerSon, { capture: true });
-addEventListener("keydown", deverrouillerSon, { capture: true });
+addEventListener("pointerdown", reveillerSon, { capture: true });
+addEventListener("keydown", reveillerSon, { capture: true });
+document.addEventListener("visibilitychange", () => { if (!document.hidden && audio && audio.state !== "running") audio.resume().catch(() => {}); });
 
 function note(freq, debut, duree, type = "sine", vol = 0.16) {
   if (!etat.son) return;
@@ -248,7 +255,7 @@ function confettis(x, y, couleurs, nb = 22) {
     c.append(h("i", { style: `--c:${couleurs[i % couleurs.length]};--dx:${Math.cos(a) * d}px;--dy:${Math.sin(a) * d - 40}px;--rot:${Math.random() * 720 - 360}deg` }));
   }
   document.body.append(c);
-  setTimeout(() => c.remove(), 1000);
+  setTimeout(() => c.remove(), 900);
 }
 
 /* ---------- Couleurs des bandes ---------- */
@@ -500,7 +507,7 @@ function repondre(s, qi, z, reps, bouton, val) {
     etat.record = Math.max(etat.record, combo);
     SONS.juste(combo);
     if (combo % 3 === 0) {
-      setTimeout(miniHorn, 120);
+      setTimeout(SONS.niveau, 80);
       if (!reduit()) banniere(multiplicateur() < 4 || combo === 9 ? `COMBO ×${multiplicateur()}` : `${combo} D'AFFILÉE`, multiplicateur() < 4 || combo === 9 ? `${combo} bonnes réponses d'affilée` : "Rien ne t'arrête");
     }
     if (estPepite(s.id)) setTimeout(SONS.pepite, 160);
@@ -656,7 +663,17 @@ function suivant(id) {
     const dispo = tous.filter(([, ok]) => ok).map(([f]) => f);
     if (dispo.length) {
       const jeu = dispo[(partie.decalage + partie.intermedes++) % dispo.length];
-      jeu(() => afficherFait(id), id);
+      let fait = false;
+      const ensuite = () => { if (fait) return; fait = true; afficherFait(id); };
+      jeu(ensuite, id);
+      // Chaque intermède peut se passer d'un geste.
+      const b = $("fil").lastElementChild;
+      const passer = h("button", { class: "passer-intermede", type: "button", onclick: () => {
+        b.classList.add("passe");
+        vider(b, h("p", { class: "consigne" }, "Intermède passé."));
+        ensuite();
+      } }, "Passer l'intermède");
+      b.querySelector("h1")?.after(passer);
       return;
     }
   }
@@ -665,11 +682,12 @@ function suivant(id) {
 
 /* ---------- Intermèdes : Éclair, Plus ou moins, Les paires ---------- */
 
+const marquerJoues = (ids) => { if (partie) for (const i of ids) partie.joues.add(i); };
 const nombresVus = (exclu) => NOMBRES.filter((n) => etat.trouves[n.id] && n.id !== exclu);
 const pairesVues = (exclu) => PAIRES.filter((p) => etat.trouves[p.id] && p.id !== exclu);
 
 // Une affirmation = une question déjà trouvée + une réponse proposée (la bonne ou une fausse).
-const affirmationsPossibles = (exclu) => Object.keys(etat.trouves).filter((id) => salleParId[id] && id !== exclu).flatMap((id) => QUESTIONS[id].filter((q) => q.type === "qcm").map((q) => ({ id, q })));
+const affirmationsPossibles = (exclu) => Object.keys(etat.trouves).filter((id) => salleParId[id] && id !== exclu).flatMap((id) => QUESTIONS[id].filter((q) => q.type === "qcm" && q.choix.length > 2).map((q) => ({ id, q })));
 function affirmation({ id, q }, vraie) {
   const fausses = q.choix.filter((_, i) => i !== q.reponse);
   return { id, question: q.texte, prop: vraie ? q.choix[q.reponse] : melanger(fausses)[0], bonne: q.choix[q.reponse], vraie };
@@ -683,6 +701,7 @@ function carteAffirmation(a) {
 function afficherPlusOuMoins(ensuite, exclu) {
   const pool = melanger(nombresVus(exclu));
   const chaine = pool.slice(0, Math.min(6, pool.length));
+  marquerJoues(chaine.map((n) => n.id));
   const MANCHES = chaine.length - 1;
   const b = nouvelleBande("intermede inter-pom");
   let k = 0, bons = 0;
@@ -732,6 +751,7 @@ function afficherPlusOuMoins(ensuite, exclu) {
 // Les paires : relier chaque mot à sa définition.
 function afficherPaires(ensuite, exclu) {
   const lot = melanger(pairesVues(exclu)).slice(0, 4);
+  marquerJoues(lot.map((p) => p.id));
   const b = nouvelleBande("intermede inter-paires");
   let choisi = null, erreurs = 0, faites = 0;
   const fin = h("div");
@@ -773,6 +793,7 @@ function afficherPaires(ensuite, exclu) {
 function afficherEclair(ensuite, exclu) {
   const DUREE = 32;
   const tirees = melanger(affirmationsPossibles(exclu)).slice(0, 8);
+  marquerJoues(tirees.map((t) => t.id));
   // Vrai et faux bien alternés au hasard : jamais trois fois de suite la même réponse.
   let items = [];
   for (let essai = 0; essai < 60; essai++) {
@@ -800,7 +821,7 @@ function afficherEclair(ensuite, exclu) {
     if (partie) { partie.score += pts; partie.questions++; if (bons >= items.length / 2) partie.bonnes++; }
     vider(carte, h("span", { class: "a-p" }, bons === items.length ? "Sans faute." : `${bons} sur ${items.length}.`));
     carte.after(h("ol", { class: "recap" }, items.slice(0, reponses.length).map((a, k) => h("li", { class: reponses[k] ? "ok" : "ko" },
-      h("span", { class: "a-q" }, a.question), h("span", null, a.vraie ? `Vrai : ${a.prop}` : `Faux : pas ${a.prop}, mais ${a.bonne}`)))));
+      h("span", { class: "a-q" }, a.question), h("span", null, `Réponse : ${a.bonne}`)))));
     vider(fin, h("p", { class: "verdict" }, h("b", null, bons ? `+${pts.toLocaleString("fr-FR")} points` : `+${pts} points`), h("span", { class: "gain" }, `${pluriel(bons, "bonne réponse", "bonnes réponses")} en ${DUREE} secondes max`)),
       h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
   };
@@ -821,6 +842,7 @@ function afficherEclair(ensuite, exclu) {
     debut = performance.now();
     montrer();
     const tic = (t) => {
+      if (b.classList.contains("passe")) return;
       const reste = Math.max(0, 1 - (t - debut) / (DUREE * 1000));
       barre.style.width = `${reste * 100}%`;
       if (reste <= 0) terminer(); else raf = requestAnimationFrame(tic);
@@ -942,7 +964,8 @@ function airHorn(debut = 0, duree = 0, volume = 0.9) {
   };
   if (hornBuffer) jouer(); else chargerHorn()?.then(() => hornBuffer && jouer());
 }
-const miniHorn = () => airHorn(0, 0.35, 0.8);
+// En fin de partie, façon meme : BWAP, BWAP, BWAAAAP.
+const tripleHorn = () => { airHorn(0, 0.32); airHorn(0.4, 0.32); airHorn(0.8); };
 
 function canonConfettis(intensite) {
   if (reduit()) return;
@@ -962,8 +985,8 @@ function canonConfettis(intensite) {
     }
   };
   salve(Math.round(160 * intensite));
-  setTimeout(() => salve(Math.round(120 * intensite)), 500);
-  setTimeout(() => salve(Math.round(180 * intensite)), 820);
+  setTimeout(() => salve(Math.round(120 * intensite)), 400);
+  setTimeout(() => salve(Math.round(180 * intensite)), 800);
   const t0 = performance.now();
   const boucle = (t) => {
     ctx.clearRect(0, 0, innerWidth, innerHeight);
@@ -973,7 +996,7 @@ function canonConfettis(intensite) {
       ctx.fillRect(-p.w / 2, -p.hh / 2 * Math.abs(Math.cos(p.r * 2)), p.w, p.hh * Math.abs(Math.cos(p.r * 2)) + 1);
       ctx.restore();
     }
-    if (t - t0 < 4200) requestAnimationFrame(boucle); else c.remove();
+    if (t - t0 < 3780) requestAnimationFrame(boucle); else c.remove();
   };
   requestAnimationFrame(boucle);
 }
@@ -987,15 +1010,15 @@ function banniere(texte, sous = "", duree = 1100) {
 
 function celebrer(ratio, record) {
   const intensite = 0.9 + ratio * 1.2 + (record ? 0.5 : 0);
-  airHorn();
+  tripleHorn();
   canonConfettis(intensite);
-  if (ratio >= 0.5 || record) setTimeout(() => canonConfettis(intensite * 0.8), 1300);
+  if (ratio >= 0.5 || record) setTimeout(() => canonConfettis(intensite * 0.8), 1170);
   if (!reduit()) {
     const secouer = () => { document.body.classList.remove("seisme"); void document.body.offsetWidth; document.body.classList.add("seisme"); };
     const flasher = () => { const f = h("div", { class: "flash" }); document.body.append(f); setTimeout(() => f.remove(), 700); };
     secouer(); flasher();
-    setTimeout(() => { secouer(); flasher(); }, 460);
-    if (ratio >= 0.5 || record) setTimeout(() => { secouer(); flasher(); }, 1760);
+    setTimeout(() => { secouer(); flasher(); }, 400);
+    setTimeout(() => { secouer(); flasher(); }, 800);
     banniere(record ? "NOUVEAU RECORD" : ratio >= 0.9 ? "LÉGENDAIRE" : ratio >= 0.7 ? "ÉNORME" : ratio >= 0.5 ? "BIEN JOUÉ" : "TERMINÉ", "", 1800);
   }
 }
