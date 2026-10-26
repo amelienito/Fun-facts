@@ -569,3 +569,21 @@ dialog.objet-dlg { background: radial-gradient(ellipse at 50% 40%, #fff6e0, #f1e
 .lb-votes .gros-bouton { margin-top: 8px; }
 .lb-bilan { padding-left: 1.2em; line-height: 1.8; }
 .lb-score-final { font-family: "Bungee", var(--titre); font-size: 1.6rem; }
+
+/* ---------- Pronostic ---------- */
+.prono { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 14px 0 6px; padding: 8px 10px; border-radius: 16px; background: rgba(0, 0, 0, 0.1); width: fit-content; max-width: 100%; transition: opacity 0.3s, transform 0.3s; }
+.prono > span { font-weight: 700; font-size: 0.9rem; margin-right: 4px; }
+.prono-n { width: 34px; height: 34px; border-radius: 50%; background: var(--texte); color: var(--fond); font-family: "Bungee", var(--titre); font-size: 0.95rem; }
+.prono-passer { font-size: 0.85rem; text-decoration: underline; text-underline-offset: 3px; padding: 0 6px; opacity: 0.8; }
+.prono.parti { opacity: 0; transform: translateY(-6px); }
+.prono-bilan { font-size: 1.05rem; margin: 6px 0 0; }
+
+/* ---------- Estimer ---------- */
+.estimer { max-width: 640px; margin-top: 10px; }
+.estimer-ligne { display: flex; align-items: center; gap: 12px; }
+.estimer-ligne .lb-valeur { flex: 1; text-align: center; margin: 8px 0; }
+.pas { width: 52px; height: 52px; border-radius: 50%; background: var(--texte); color: var(--fond); font-family: "Bungee", var(--titre); font-size: 1.6rem; line-height: 1; flex: none; box-shadow: 0 4px 0 rgba(0, 0, 0, 0.25); }
+.pas:disabled { opacity: 0.3; box-shadow: none; }
+.estimer .lb-range-zone { margin-top: 30px; }
+.placer, .estimer { margin-bottom: 8px; }
+.placer .lb-frise { margin-top: 40px; }

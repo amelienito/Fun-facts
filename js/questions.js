@@ -20,9 +20,10 @@ export const QUESTIONS = {
   }],
   nintendo: [
     {
-      type: "qcm", texte: "En quelle année Nintendo a-t-elle été fondée ?", ordre: true,
-      choix: ["1889", "1933", "1959", "1977"], reponse: 0,
-      explication: "En 1889. Nintendo indique avoir été fondée en septembre 1889, à Kyoto.",
+      type: "placer", texte: "Nintendo a été fondée à Kyoto. Place sa création sur la frise.", sujet: "Nintendo",
+      min: 1666, max: 2007, gauche: "Grand Incendie de Londres", gaucheDate: "1666", droite: "Premier iPhone", droiteDate: "2007",
+      val: 1889, valTexte: "1889", tol: 25,
+      explication: "En 1889. Nintendo indique avoir été fondée en septembre 1889, à Kyoto. Il fallait tomber à 25 ans près.",
     },
     {
       type: "qcm", texte: "Et que fabriquait Nintendo à ses débuts ?",
@@ -99,9 +100,9 @@ export const QUESTIONS = {
     explication: "À Paris, le 21 mai 1904, au 229 rue Saint-Honoré. La France, la Belgique, le Danemark, les Pays-Bas et la Suisse étaient présents ; l'Angleterre ne l'a rejointe qu'en 1905.",
   }],
   dexaie: [{
-    type: "qcm", texte: "Que criaient les chevaliers normands en partant au combat ?",
-    choix: ["« Dex aïe ! »", "« Montjoie ! »", "« Saint-Georges ! »", "« Santiago ! »"], reponse: 0,
-    explication: "« Dex aïe ! », c'est-à-dire « Dieu, notre aide ! ». Ils le lançaient sur les champs de bataille d'Europe et du Proche-Orient, pour signaler leur présence et leur origine.",
+    type: "qcm", texte: "« Dex aïe ! », le cri de guerre des chevaliers normands, voulait dire…",
+    choix: ["« Dieu, notre aide ! »", "« Dieu le veut ! »", "« Aïe, mon Dieu ! »", "« En avant, Normandie ! »"], reponse: 0,
+    explication: "« Dieu, notre aide ! ». Les chevaliers normands le lançaient sur les champs de bataille d'Europe et du Proche-Orient, pour signaler leur présence et leur origine.",
   }],
   statue: [{
     type: "qcm", texte: "Quelle est la plus grande statue du monde ?",
@@ -124,9 +125,13 @@ export const QUESTIONS = {
     explication: "Une marque de cacao : les boîtes Droste montraient une infirmière portant un plateau avec une boîte identique, sur laquelle on retrouvait la même scène, et ainsi de suite.",
   }],
   beksinski: [{
-    type: "qcm", texte: "Quel titre le peintre polonais Zdzisław Beksiński donnait-il à ses tableaux ?",
+    type: "qcm", texte: "Quel titre ce peintre polonais du XXe siècle donnait-il à ses tableaux ?",
     choix: ["Aucun", "Un prénom", "Un mot inventé", "Un lieu"], reponse: 0,
     explication: "Aucun : il ne nommait ni ses dessins ni ses tableaux, car ses œuvres n'avaient pas à être expliquées. Il disait ne pas savoir lui-même ce qu'elles signifiaient.",
+  }, {
+    type: "qcm", texte: "Et comment s'écrit le nom de ce peintre ?",
+    choix: ["Zdzisław Beksiński", "Zdzislaw Bekszinski", "Zdzisłav Beksinsky", "Zdźisław Bekśinski"], reponse: 0,
+    explication: "Zdzisław Beksiński, avec un « ł » barré et un « ń » accentué.",
   }],
   quebec: [{
     type: "qcm", texte: "Sous quel titre la comédie Le Plus Escroc des deux (1988) est-elle sortie au Québec ?",
@@ -184,13 +189,13 @@ export const QUESTIONS = {
     explication: "Justin.tv. Twitch en était la catégorie « jeux vidéo », qui attirait plus de spectateurs que toutes les autres réunies. Elle est devenue un service à part en 2011.",
   }],
   baseball: [{
-    type: "qcm", texte: "Combien de matchs chaque équipe de la MLB joue-t-elle pendant la saison régulière ?", ordre: true,
-    choix: ["82", "120", "162", "200"], reponse: 2,
+    type: "estimer", texte: "Combien de matchs chaque équipe de la MLB joue-t-elle pendant la saison régulière ?",
+    min: 50, max: 250, val: 162, tol: 15, unite: "matchs",
     explication: "162, à peu près un par jour pendant six mois. 82, c'est le nombre de matchs d'une saison régulière en NBA ou en NHL.",
   }],
   around: [{
-    type: "qcm", texte: "Combien de fois la phrase « Around the world » est-elle répétée dans le morceau de Daft Punk ?", ordre: true,
-    choix: ["44 fois", "88 fois", "144 fois", "200 fois"], reponse: 2,
+    type: "estimer", texte: "Combien de fois la phrase « Around the world » est-elle répétée dans le morceau de Daft Punk ?",
+    min: 0, max: 300, val: 144, tol: 20, unite: "fois",
     explication: "144 fois, selon le décompte le plus souvent cité pour la version de l'album Homework (1997). Ce sont les seules paroles du morceau.",
   }],
   bestof: [{
@@ -298,13 +303,6 @@ export const MYSTERES = new Set(["ecureuil", "hiboux"]);
 // Frises : les questions à deux choix évidents se jouent sur une ligne du temps.
 // Les choix restent dans l'ordre (gauche, droite). « cache » : le point apparaît après la réponse.
 export const FRISES = {
-  "cleopatre:0": {
-    min: -2500, max: 2007,
-    ordreChoix: [1, 0],
-    gauche: { nom: "Grande pyramide", date: "début du XXVe s. av. J.-C." },
-    droite: { nom: "Premier iPhone", date: "2007" },
-    points: [{ nom: "Cléopâtre", val: -69, date: "naît en 70 ou 69 av. J.-C.", mystere: true }],
-  },
   "requins:0": {
     min: -500, max: 0,
     gauche: { nom: "Il y a 500 millions d'années", date: "" },

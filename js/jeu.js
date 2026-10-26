@@ -289,6 +289,20 @@ function choisirDepart() {
   return revus.length ? revus[0].id : null;
 }
 
+// Pronostic de début de partie : un bonus si on le tient, rien à perdre sinon.
+function blocPronostic() {
+  const bloc = h("div", { class: "prono" }, h("span", null, "Tu te mets combien sur 10 ?"));
+  const fermer = () => { bloc.classList.add("parti"); setTimeout(() => bloc.remove(), 300); };
+  for (const n of [5, 6, 7, 8, 9, 10]) bloc.append(h("button", { class: "prono-n", type: "button", onclick: () => {
+    if (!partie) return;
+    partie.prono = n; SONS.porte();
+    vider(bloc, h("span", null, `Pronostic : ${n}/10. Tiens-le pour un bonus.`));
+    setTimeout(fermer, 1600);
+  } }, n));
+  bloc.append(h("button", { class: "prono-passer", type: "button", onclick: () => { if (partie) partie.prono = 0; fermer(); } }, "Passer"));
+  return bloc;
+}
+
 function afficherFait(id, premier) {
   const s = salleParId[id];
   etat.pistes = etat.pistes.filter((x) => x !== id);
@@ -307,6 +321,7 @@ function afficherFait(id, premier) {
       estPepite(id) ? h("span", { class: "etiq pepite" }, "Pépite ×2") : null,
       etat.trouves[id] ? h("span", { class: "etiq" }, "Déjà dans ta collection") : null),
     tete, suite);
+  if (partie && partie.n === 1 && partie.prono == null) b.querySelector(".etiquettes").after(blocPronostic());
   poser(s, 0, { b, tete, suite, zoneObjet });
   if (!premier) allerA(b);
   else setTimeout(() => b.querySelector("h1")?.focus({ preventScroll: true }), 50);
@@ -316,6 +331,8 @@ function poser(s, qi, z) {
   const q = QUESTIONS[s.id][qi];
   const total = QUESTIONS[s.id].length;
   if (q.type === "multi") return poserMulti(s, qi, z, q, total);
+  if (q.type === "placer") return poserPlacer(s, qi, z, q, total);
+  if (q.type === "estimer") return poserEstimer(s, qi, z, q, total);
   const frise = FRISES[`${s.id}:${qi}`];
   const opts = q.type === "vf"
     ? [["Vrai", true], ["Faux", false]]
@@ -389,13 +406,84 @@ function poserMulti(s, qi, z, q, total) {
   if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
 }
 
+const entete = (z, q, qi, total) => [z.zoneObjet,
+  total > 1 ? h("p", { class: "q-num" }, `Question ${qi + 1} sur ${total}`) : null,
+  h("h1", { class: `question ${q.texte.length > 72 ? "longue" : ""}`, tabindex: "-1" }, q.texte)];
+const anneeTxt = (a) => (a < 0 ? `${Math.round(-a).toLocaleString("fr-FR")} av. J.-C.` : String(Math.round(a)));
+
+// Placer un événement sur la frise : on touche la ligne, on ajuste, on valide.
+function poserPlacer(s, qi, z, q, total) {
+  z.frise = null;
+  const zone = h("div", { class: "placer" });
+  let pos = null, tient = false;
+  const repere = h("div", { class: "lb-repere pose" }, h("i"), h("span", null, q.sujet));
+  const vrai = h("div", { class: "lb-repere vrai" }, h("i"), h("span", null, q.valTexte));
+  const lecture = h("p", { class: "lb-lecture" }, "Touche la ligne, ajuste, puis valide.");
+  const piste = h("div", { class: "lb-piste" }, repere, vrai);
+  const valider = h("button", { class: "gros-bouton", type: "button", disabled: true }, "Valider");
+  const placer = (x) => {
+    const r = piste.getBoundingClientRect();
+    pos = Math.min(1, Math.max(0, (x - r.left) / r.width));
+    repere.style.left = `${pos * 100}%`; repere.classList.add("visible");
+    lecture.textContent = `${q.sujet} : ${anneeTxt(q.min + pos * (q.max - q.min))}`;
+    valider.disabled = false;
+  };
+  piste.addEventListener("pointerdown", (e) => { if (zone.classList.contains("fini")) return; tient = true; piste.setPointerCapture(e.pointerId); placer(e.clientX); });
+  piste.addEventListener("pointermove", (e) => { if (tient) placer(e.clientX); });
+  piste.addEventListener("pointerup", () => { tient = false; });
+  valider.addEventListener("click", () => {
+    if (zone.classList.contains("fini") || pos == null) return;
+    const v = q.min + pos * (q.max - q.min);
+    vrai.style.left = `${((q.val - q.min) / (q.max - q.min)) * 100}%`; vrai.classList.add("visible");
+    lecture.textContent = `Tu as placé : ${anneeTxt(v)}. Réponse : ${q.valTexte}.`;
+    valider.remove();
+    repondre(s, qi, z, zone, piste, Math.abs(v - q.val) <= q.tol);
+  });
+  vider(zone, h("div", { class: "lb-frise" }, piste,
+    h("div", { class: "frise-bouts" },
+      h("span", null, h("b", null, q.gauche), h("small", null, q.gaucheDate)),
+      h("span", null, h("b", null, q.droite), h("small", null, q.droiteDate)))), lecture, valider);
+  vider(z.tete, entete(z, q, qi, total), zone);
+  if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
+}
+
+// Estimer un chiffre au curseur, avec − et + pour viser juste.
+function poserEstimer(s, qi, z, q, total) {
+  z.frise = null;
+  const zone = h("div", { class: "estimer" });
+  const milieu = Math.round((q.min + q.max) / 2);
+  const chiffre = h("b", null, milieu.toLocaleString("fr-FR"));
+  const curseur = h("input", { type: "range", class: "lb-range", min: q.min, max: q.max, step: 1, value: milieu, "aria-label": q.texte });
+  const valider = h("button", { class: "gros-bouton", type: "button", disabled: true }, "Valider");
+  const maj = () => { chiffre.textContent = Number(curseur.value).toLocaleString("fr-FR"); valider.disabled = false; };
+  curseur.addEventListener("input", maj);
+  const pas = (d) => h("button", { class: "pas", type: "button", "aria-label": d > 0 ? "Plus un" : "Moins un", onclick: () => { if (zone.classList.contains("fini")) return; curseur.value = Number(curseur.value) + d; maj(); SONS.porte(); } }, d > 0 ? "+" : "−");
+  const vrai = h("div", { class: "lb-range-vrai", style: `left:${((q.val - q.min) / (q.max - q.min)) * 100}%` }, h("span", null, q.val.toLocaleString("fr-FR")));
+  valider.addEventListener("click", () => {
+    if (zone.classList.contains("fini")) return;
+    curseur.disabled = true; valider.remove(); vrai.classList.add("visible");
+    zone.querySelectorAll(".pas").forEach((b) => (b.disabled = true));
+    const ecart = Math.abs(Number(curseur.value) - q.val);
+    lecture.textContent = ecart === 0 ? "Pile poil !" : `Écart : ${ecart.toLocaleString("fr-FR")} (il fallait tomber à ${q.tol} près).`;
+    repondre(s, qi, z, zone, curseur, ecart <= q.tol);
+  });
+  const lecture = h("p", { class: "lb-lecture" });
+  vider(zone,
+    h("div", { class: "estimer-ligne" }, pas(-1), h("p", { class: "lb-valeur" }, chiffre, ` ${q.unite}`), pas(1)),
+    h("div", { class: "lb-range-zone" }, curseur, vrai, h("div", { class: "lb-range-bornes" }, h("span", null, q.min.toLocaleString("fr-FR")), h("span", null, q.max.toLocaleString("fr-FR")))),
+    lecture, valider);
+  vider(z.tete, entete(z, q, qi, total), zone);
+  if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
+}
+
 function repondre(s, qi, z, reps, bouton, val) {
   if (reps.classList.contains("fini")) return;
   reps.classList.add("fini");
   if (z.frise) setTimeout(() => z.frise.classList.add("revelee"), 250);
   const q = QUESTIONS[s.id][qi];
-  const juste = q.type === "multi" ? val : val === q.reponse;
-  if (q.type !== "multi") for (const x of reps.querySelectorAll(".rep")) {
+  const special = ["multi", "placer", "estimer"].includes(q.type);
+  const juste = special ? val : val === q.reponse;
+  if (!special) for (const x of reps.querySelectorAll(".rep")) {
     const v = x.dataset.v === "true" ? true : x.dataset.v === "false" ? false : Number(x.dataset.v);
     x.classList.add(v === q.reponse ? "bon" : "barre");
     if (x === bouton) x.classList.add("choisi");
@@ -780,6 +868,15 @@ function finPartie() {
   const p = partie;
   const ratio = p.questions ? p.bonnes / p.questions : 0;
   const cle = String(p.total);
+  const note = Math.round(ratio * 10);
+  let bonusProno = 0;
+  if (p.prono) {
+    bonusProno = note >= p.prono ? p.prono * 300 * (note === p.prono ? 2 : 1) : 0;
+    if (bonusProno) { p.score += bonusProno; gagner(bonusProno); }
+  }
+  const lignePronostic = p.prono ? h("p", { class: "prono-bilan" }, note >= p.prono
+    ? [h("b", null, note === p.prono ? "Pronostic pile tenu !" : "Pronostic tenu !"), ` Tu visais ${p.prono}/10, tu fais ${note}/10 : +${bonusProno.toLocaleString("fr-FR")} points.`]
+    : [h("b", null, "Pronostic raté."), ` Tu visais ${p.prono}/10, tu fais ${note}/10. Aucun point perdu.`]) : null;
   const ancien = etat.meilleurs[cle] || 0;
   const record = p.score > ancien;
   if (record) { etat.meilleurs[cle] = p.score; sauver(); }
@@ -793,6 +890,7 @@ function finPartie() {
     h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, `Partie de ${p.total}`), record ? h("span", { class: "etiq pepite" }, ancien ? "Nouveau record" : "Premier record") : null),
     h("h1", { class: "question titre-fin", tabindex: "-1" }, titre),
     h("p", { class: "score-ligne" }, score, h("span", null, "points")),
+    lignePronostic,
     h("ul", { class: "stats" },
       h("li", null, h("b", null, `${p.bonnes}/${p.questions}`), "bonnes réponses"),
       h("li", null, h("b", null, p.comboMax), "meilleur combo"),
@@ -998,7 +1096,7 @@ function ouvrirFiche(id) {
       h("button", { class: "fiche-objet", type: "button", onclick: () => { dlg.close(); ouvrirObjet(id); }, "aria-label": "Contempler l'objet" }, imageObjet(s.objet, "fiche-img"), h("span", { class: "contempler" }, "Contempler")),
       QUESTIONS[id].map((q) => [
         h("p", { class: "fiche-q" }, q.texte),
-        h("p", { class: "fiche-r" }, `Réponse : ${q.type === "vf" ? (q.reponse ? "vrai" : "faux") : q.type === "multi" ? q.bonnes.map((i) => q.choix[i]).join(", ") : q.choix[q.reponse]}`),
+        h("p", { class: "fiche-r" }, `Réponse : ${q.type === "vf" ? (q.reponse ? "vrai" : "faux") : q.type === "multi" ? q.bonnes.map((i) => q.choix[i]).join(", ") : q.type === "placer" ? q.valTexte : q.type === "estimer" ? `${q.val} ${q.unite}` : q.choix[q.reponse]}`),
         h("p", null, q.explication)]),
       s.saviezVous ? h("p", { class: "saviez" }, h("b", null, "Le saviez-vous ?"), s.saviezVous) : null,
       blocSources(s.sources)));
