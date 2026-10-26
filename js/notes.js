@@ -433,7 +433,6 @@ export const SALLES_NOTES = [
     id: "eswc", cat: "pop", objet: "souris", nom: "Souris de joueuse",
     porte: "Des joueuses, une coupe du monde",
     questions: [],
-    saviezVous: "De 8 équipes invitées en 2003, le tournoi féminin est passé à 24 équipes en 2005, avec 30 000 dollars à la clé.",
     sources: [S.esrEswc2003, S.gdEswc2005, S.aaaEswc],
     liens: [{ vers: "justin", porte: "Une plateforme née d'une autre" }],
   },
