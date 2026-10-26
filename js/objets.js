@@ -601,7 +601,7 @@ function micro(variante) {
     g.add(tourne(m(new THREE.CylinderGeometry(0.1, 0.1, 0.02, 12), mat(0x5bc2b6), 0, 1.0, 0.39), "x", PI / 2));
     g.add(m(new THREE.SphereGeometry(0.04, 6, 4), new THREE.MeshBasicMaterial({ color: 0xff3b3b }), 0.26, 1.15, 0.2));
   } else {
-    g.add(m(new THREE.IcosahedronGeometry(0.22, 1), mat(0x9aa3a8, { shininess: 80, specular: 0x999999 }), 0, 1.45, 0));
+    g.add(m(new THREE.IcosahedronGeometry(0.22, 1), variante === "or" ? laiton() : mat(0x9aa3a8, { shininess: 80, specular: 0x999999 }), 0, 1.45, 0));
     g.add(m(new THREE.CylinderGeometry(0.11, 0.08, 0.5, 8), mat(0x2d3134), 0, 1.12, 0));
   }
   g.add(m(new THREE.CylinderGeometry(0.03, 0.03, 0.85, 6), mat(0x2d3134), 0, 0.45, 0));
@@ -653,7 +653,7 @@ function souris() {
 }
 
 function vinyle(variante) {
-  const couleurs = { bleu: 0x2c5f9e, or: 0xc9952f, rouge: 0xb3262e, rose: 0xe58fb0, vert: 0x3f8a5a };
+  const couleurs = { bleu: 0x2c5f9e, or: 0xc9952f, rouge: 0xb3262e, rose: 0xe58fb0, vert: 0x3f8a5a, vapor: 0xff71ce };
   const g = new THREE.Group();
   const poch = m(new THREE.BoxGeometry(1.1, 1.1, 0.04), mat(couleurs[variante] || 0x2c5f9e), -0.12, 0.62, -0.1);
   poch.rotation.z = 0.04;
@@ -799,7 +799,7 @@ function statue() {
 }
 
 function livre(variante) {
-  const couleurs = { vert: 0x2f6b4f, rouge: 0xa8204f, bleu: 0x2c4f8e, violet: 0x5d3a7a, noir: 0x26292c, ocre: 0xb8862b, gris: 0x55595c, rouge2: 0x8a2a1e };
+  const couleurs = { vert: 0x2f6b4f, rouge: 0xa8204f, bleu: 0x2c4f8e, violet: 0x5d3a7a, noir: 0x26292c, ocre: 0xb8862b, gris: 0x55595c, rouge2: 0x8a2a1e, jaune: 0xd9b41f };
   const g = new THREE.Group();
   const couv = mat(couleurs[variante] || 0x2f6b4f, { shininess: 25 });
   const pages = mat(0xf3e8d0);
@@ -871,10 +871,53 @@ function bouclier() {
   return g;
 }
 
+// Nessie : trois bosses, un long cou, sur un disque d'eau sombre.
+function nessie() {
+  const g = new THREE.Group();
+  g.add(m(new THREE.CylinderGeometry(0.85, 0.9, 0.08, 18), mat(0x1f3b4d, { shininess: 80, specular: 0x6688aa }), 0, 0.04, 0));
+  const peau = mat(0x3f6b4a);
+  [[-0.45, 0.16], [-0.05, 0.2], [0.32, 0.13]].forEach(([x, r]) => {
+    const b = m(new THREE.TorusGeometry(r, 0.07, 6, 10, PI), peau, x, 0.08, 0);
+    g.add(b);
+  });
+  const pts = [new THREE.Vector3(0.45, 0.08, 0), new THREE.Vector3(0.6, 0.45, 0), new THREE.Vector3(0.55, 0.85, 0), new THREE.Vector3(0.68, 1.02, 0)];
+  g.add(m(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 20, 0.075, 6), peau));
+  const tete = ellipsoide(0.16, 0.09, 0.1, peau, 0.78, 1.04, 0, 1);
+  tete.rotation.z = -0.2;
+  g.add(tete);
+  for (const z of [-0.06, 0.06]) g.add(m(new THREE.SphereGeometry(0.022, 6, 4), mat(0xf3e8d0), 0.84, 1.09, z));
+  g.scale.setScalar(1.3);
+  g.rotation.y = -0.35;
+  return g;
+}
+
+// Ankylosaure : un char d'assaut à écailles (sans sa massue, que la silhouette ne doit pas trahir).
+function ankylosaure() {
+  const g = new THREE.Group();
+  const peau = mat(0x8a6b3e), plaque = mat(0x5b4428), os = mat(0xd9c9a3);
+  g.add(ellipsoide(0.62, 0.3, 0.42, peau, 0, 0.55, 0, 1));
+  for (let i = 0; i < 5; i++) for (const sz of [-1, 1]) {
+    const pic = m(new THREE.ConeGeometry(0.06, 0.2, 5), os, -0.4 + i * 0.2, 0.55, sz * 0.4);
+    pic.rotation.x = sz * PI / 2.3;
+    g.add(pic);
+  }
+  for (let i = 0; i < 4; i++) g.add(m(new THREE.BoxGeometry(0.16, 0.05, 0.5 - Math.abs(i - 1.5) * 0.08), plaque, -0.3 + i * 0.2, 0.84, 0));
+  for (const [x, z] of [[-0.35, -0.22], [-0.35, 0.22], [0.35, -0.22], [0.35, 0.22]]) g.add(m(new THREE.BoxGeometry(0.14, 0.34, 0.14), peau, x, 0.17, z));
+  const tete = m(new THREE.BoxGeometry(0.3, 0.2, 0.3), peau, 0.72, 0.52, 0);
+  g.add(tete);
+  for (const z of [-0.13, 0.13]) { const c = m(new THREE.ConeGeometry(0.04, 0.14, 4), os, 0.66, 0.62, z); c.rotation.z = PI / 2.5; g.add(c); }
+  const pts = [new THREE.Vector3(-0.55, 0.55, 0), new THREE.Vector3(-0.9, 0.45, 0.05), new THREE.Vector3(-1.2, 0.38, 0.15)];
+  g.add(m(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 12, 0.07, 6), peau));
+  g.add(m(new THREE.ConeGeometry(0.07, 0.2, 6), peau, -1.28, 0.36, 0.18).rotateZ(PI / 2));
+  g.scale.setScalar(0.85);
+  g.rotation.y = 0.5;
+  return g;
+}
+
 const FABRIQUES = {
   cerveau, pyramide, dent, hanafuda, eiffel, drap, caisse,
   nid, hibou, ours, arbre, cachalot, os, pain, colonne, boulefeu, boite, chrono,
-  ballon, balle, bobine, vhs, micro, manette, souris, vinyle, tableau, statue, livre, fromage, casque, bouclier,
+  ballon, balle, bobine, vhs, micro, manette, souris, vinyle, tableau, statue, livre, fromage, casque, bouclier, nessie, ankylosaure,
 };
 
 export function construire(id) {

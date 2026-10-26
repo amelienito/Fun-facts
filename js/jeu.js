@@ -42,6 +42,8 @@ const salleParId = Object.fromEntries(SALLES.map((s) => [s.id, s]));
 const serieDe = Object.fromEntries(SERIES.flatMap((s) => s.ids.map((id) => [id, s])));
 const estPepite = (id) => PEPITES.includes(id);
 const TOTAL = SALLES.length;
+// Parties courtes par défaut : on relance plus volontiers, et la réserve de faits dure plus longtemps.
+const DUREES = [5, 7, 10, 15, 20, TOTAL];
 
 /* ---------- Sauvegarde (navigateur) ---------- */
 
@@ -56,7 +58,7 @@ const etat = (() => {
     record: e.record || 0,
     son: e.son !== false,
     pepiteGarantie: !!e.pepiteGarantie,
-    longueur: e.longueur || 10,
+    longueur: DUREES.includes(e.longueur) ? e.longueur : 7,
     proposerDuree: !!e.proposerDuree,
     meilleurs: Object.fromEntries(Object.entries(e.meilleurs || {}).map(([k, v]) => [k, (e.echelle === 50 ? 1 : 50) * v])),
     echelle: 50,
@@ -183,7 +185,9 @@ const SONS = {
 /* ---------- Niveaux, combo, HUD ---------- */
 
 let combo = 0;
-const multiplicateur = () => Math.min(4, 1 + Math.floor(combo / 3));
+// Barème proportionnel : le combo ajoute +25 % toutes les 3 bonnes réponses, plafonné à ×2.
+const multiplicateur = () => Math.min(2, 1 + 0.25 * Math.floor(combo / 3));
+const fois = (m) => `×${m.toLocaleString("fr-FR")}`;
 const niveauDe = (xp) => {
   let i = 0;
   NIVEAUX.forEach((n, k) => { if (xp >= n.xp) i = k; });
@@ -204,8 +208,8 @@ function majHud(anime) {
   $("progression-partie").hidden = !partie;
   const m = multiplicateur();
   const s = $("serie");
-  s.hidden = m < 2;
-  s.replaceChildren(h("span", { class: "combo-mot" }, "Combo "), `×${m}`);
+  s.hidden = m <= 1;
+  s.replaceChildren(h("span", { class: "combo-mot" }, "Combo "), fois(m));
   if (anime) for (const id of anime) { const el = $(id); el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
 }
 
@@ -344,6 +348,7 @@ function poser(s, qi, z) {
   if (q.type === "multi") return poserMulti(s, qi, z, q, total);
   if (q.type === "placer") return poserPlacer(s, qi, z, q, total);
   if (q.type === "estimer") return poserEstimer(s, qi, z, q, total);
+  if (q.type === "taper") return poserTaper(s, qi, z, q, total);
   const frise = FRISES[`${s.id}:${qi}`];
   const opts = q.type === "vf"
     ? [["Vrai", true], ["Faux", false]]
@@ -489,12 +494,48 @@ function poserEstimer(s, qi, z, q, total) {
   if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
 }
 
+// Réponse à taper (rare) : tolérante aux accents, majuscules, articles et petites fautes de frappe.
+const normaliser = (t) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+  .replace(/^(le|la|les|l'|l’|un|une|des|du|the)\s*/, "").replace(/[^a-z0-9]/g, "");
+function distance(a, b) {
+  const d = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) d[0][j] = j;
+  for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++)
+    d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return d[a.length][b.length];
+}
+const accepteTape = (tape, q) => {
+  const t = normaliser(tape);
+  return !!t && q.accepte.some((r) => { const n = normaliser(r); return distance(t, n) <= (n.length <= 5 ? 0 : n.length <= 8 ? 1 : 2); });
+};
+function poserTaper(s, qi, z, q, total) {
+  z.frise = null;
+  const zone = h("div", { class: "taper" });
+  const champ = h("input", { type: "text", class: "taper-champ", autocomplete: "off", autocapitalize: "off", autocorrect: "off", spellcheck: "false", enterkeyhint: "done", "aria-label": "Ta réponse", placeholder: "Ta réponse" });
+  const valider = h("button", { class: "gros-bouton", type: "button", disabled: true }, "Valider");
+  const secher = h("button", { class: "lien-texte", type: "button" }, "Je sèche");
+  const lecture = h("p", { class: "lb-lecture" });
+  const finir = (val) => {
+    if (zone.classList.contains("fini")) return;
+    champ.disabled = true; valider.remove(); secher.remove();
+    lecture.textContent = `Réponse : ${q.accepte[0]}.`;
+    repondre(s, qi, z, zone, champ, val);
+  };
+  champ.addEventListener("input", () => { valider.disabled = !champ.value.trim(); });
+  champ.addEventListener("keydown", (e) => { if (e.key === "Enter" && champ.value.trim()) { e.preventDefault(); champ.blur(); finir(accepteTape(champ.value, q)); } });
+  valider.addEventListener("click", () => finir(accepteTape(champ.value, q)));
+  secher.addEventListener("click", () => finir(false));
+  vider(zone, q.indice ? h("p", { class: "taper-indice" }, q.indice) : null, champ, lecture, h("div", { class: "taper-actions" }, valider, secher));
+  vider(z.tete, entete(z, q, qi, total), zone);
+  if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
+}
+
 function repondre(s, qi, z, reps, bouton, val) {
   if (reps.classList.contains("fini")) return;
   reps.classList.add("fini");
   if (z.frise) setTimeout(() => z.frise.classList.add("revelee"), 250);
   const q = QUESTIONS[s.id][qi];
-  const special = ["multi", "placer", "estimer"].includes(q.type);
+  const special = ["multi", "placer", "estimer", "taper"].includes(q.type);
   const presque = val === "presque";
   const juste = special ? val === true || presque : val === q.reponse;
   if (!special) for (const x of reps.querySelectorAll(".rep")) {
@@ -506,18 +547,18 @@ function repondre(s, qi, z, reps, bouton, val) {
   const r = bouton.getBoundingClientRect();
   let gain;
   if (juste) {
-    gain = 500 * multiplicateur() * (estPepite(s.id) ? 2 : 1) * (presque ? 0.5 : 1);
+    gain = 1000 * multiplicateur() * (estPepite(s.id) ? 2 : 1) * (presque ? 0.5 : 1);
     combo++;
     etat.record = Math.max(etat.record, combo);
     SONS.juste(combo);
     if (combo % 3 === 0) {
       setTimeout(SONS.niveau, 80);
-      if (!reduit()) banniere(multiplicateur() < 4 || combo === 9 ? `COMBO ×${multiplicateur()}` : `${combo} D'AFFILÉE`, multiplicateur() < 4 || combo === 9 ? `${combo} bonnes réponses d'affilée` : "Rien ne t'arrête");
+      if (!reduit()) banniere(multiplicateur() < 2 || combo === 12 ? `COMBO ${fois(multiplicateur())}` : `${combo} D'AFFILÉE`, multiplicateur() < 2 || combo === 12 ? `${combo} bonnes réponses d'affilée` : "Rien ne t'arrête");
     }
     if (estPepite(s.id)) setTimeout(SONS.pepite, 160);
     confettis(r.left + r.width / 2, r.top + r.height / 2, estPepite(s.id) ? ["#FFC93C", "#FFE08A", "#FFF4D0"] : ["#15131A", "#FBF5E9", "#FFC93C", "#3D5AFE"]);
   } else {
-    gain = 100;
+    gain = 200;
     combo = 0;
     SONS.faux();
     reps.classList.add("secoue");
@@ -736,7 +777,7 @@ function afficherPlusOuMoins(ensuite, exclu) {
     vider(scene, h("p", { class: "consigne" }, `Manche ${k + 1} sur ${MANCHES}`), carteN(a), h("p", { class: "pom-vs" }, "contre"), droite, choix);
   };
   const terminer = () => {
-    const pts = Math.max(100, bons * 500 + (bons === MANCHES ? 2500 : 0));
+    const pts = Math.max(200, bons * 1000 + (bons === MANCHES ? 2000 : 0));
     gagner(pts, innerWidth / 2, scene.getBoundingClientRect().top + 60);
     if (partie) { partie.score += pts; partie.questions++; if (bons >= MANCHES / 2) partie.bonnes++; }
     if (bons === MANCHES) { combo++; confettis(innerWidth / 2, innerHeight / 2, ["#FFC93C", "#FBF5E9", "#15131A"]); }
@@ -744,7 +785,7 @@ function afficherPlusOuMoins(ensuite, exclu) {
       h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
   };
   vider(b,
-    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "Sans faute : +2 500")),
+    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "Sans faute : +2 000")),
     h("h1", { class: "question", tabindex: "-1" }, "Plus ou moins"),
     h("p", { class: "consigne" }, "Le chiffre caché est-il plus grand ou plus petit que celui d'au-dessus ?"),
     scene, fin);
@@ -780,14 +821,14 @@ function afficherPaires(ensuite, exclu) {
   lot.forEach((p, k) => mots.append(h("button", { class: "paire mot", type: "button", "data-k": k, "data-cote": "m", onclick: (e) => clic(e.currentTarget) }, p.mot)));
   melanger(lot.map((p, k) => [p, k])).forEach(([p, k]) => defs.append(h("button", { class: "paire def", type: "button", "data-k": k, "data-cote": "d", onclick: (e) => clic(e.currentTarget) }, p.def)));
   const terminer = () => {
-    const pts = Math.max(500, 3000 - erreurs * 500);
+    const pts = Math.max(1000, 6000 - erreurs * 1000);
     gagner(pts, innerWidth / 2, mots.getBoundingClientRect().top);
     if (partie) { partie.score += pts; partie.questions++; if (erreurs <= 2) partie.bonnes++; }
     vider(fin, h("p", { class: "verdict" }, h("b", null, erreurs ? pluriel(erreurs, "erreur", "erreurs") + "." : "Sans faute."), h("span", { class: "gain" }, `+${pts.toLocaleString("fr-FR")} points`)),
       h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
   };
   vider(b,
-    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "Jusqu'à +3 000")),
+    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "Jusqu'à +6 000")),
     h("h1", { class: "question", tabindex: "-1" }, "Les paires"),
     h("p", { class: "consigne" }, "Touche un mot, puis sa définition."),
     h("div", { class: "paires" }, mots, defs), fin);
@@ -819,7 +860,7 @@ function afficherEclair(ensuite, exclu) {
     fini = true;
     cancelAnimationFrame(raf);
     boutons.remove();
-    const pts = Math.max(100, bons * 250 + (bons === items.length ? 1000 : 0));
+    const pts = Math.max(200, bons * 500 + (bons === items.length ? 1000 : 0));
     if (bons) SONS.juste(bons); else SONS.faux();
     gagner(pts, innerWidth / 2, carte.getBoundingClientRect().top);
     if (partie) { partie.score += pts; partie.questions++; if (bons >= items.length / 2) partie.bonnes++; }
@@ -864,7 +905,7 @@ function afficherEclair(ensuite, exclu) {
 /* ---------- Parties ---------- */
 
 let partie = null;
-const DUREES = [10, 15, 20, 30, 40, TOTAL];
+
 const estimation = (n) => { const min = Math.max(1, Math.round((n * 25) / 60)); return `≈ ${min} min`; };
 
 function nouvellePartie(total) {
@@ -901,7 +942,7 @@ function finPartie() {
   const note = Math.round(ratio * 10);
   let bonusProno = 0;
   if (p.prono) {
-    bonusProno = note >= p.prono ? p.prono * 300 * (note === p.prono ? 2 : 1) : 0;
+    bonusProno = note >= p.prono ? p.prono * 100 * (note === p.prono ? 2 : 1) : 0;
     if (bonusProno) { p.score += bonusProno; gagner(bonusProno); }
   }
   const lignePronostic = p.prono ? h("p", { class: "prono-bilan" }, note >= p.prono

@@ -37,7 +37,7 @@ async ({skill, ctl}) => {
   }
   // question en cours ?
   const h1 = last.querySelector('h1.question');
-  const ouverte = last.querySelector('.reponses:not(.fini) .rep, .multi:not(.fini), .placer:not(.fini), .estimer:not(.fini)');
+  const ouverte = last.querySelector('.reponses:not(.fini) .rep, .multi:not(.fini), .placer:not(.fini), .estimer:not(.fini), .taper:not(.fini)');
   if (h1 && ouverte && !last.querySelector('.suite:not([hidden]) .verdict')) {
     const info = window.__idx[h1.textContent.replace(/[\s\u202F\u00A0]/g,'')];
     if (!info) return {k:'inconnue', texte: h1.textContent, ...out};
@@ -55,6 +55,10 @@ async ({skill, ctl}) => {
       const want = new Set(ok ? q.bonnes : [t.map(x => Number(x.dataset.i)).find(i => !q.bonnes.includes(i))]);
       t.forEach(x => { if (want.has(Number(x.dataset.i))) x.click(); });
       [...last.querySelectorAll('.gros-bouton')].find(b => b.textContent.includes('Valider')).click(); out.k = 'rep'; return out;
+    }
+    if (q.type === 'taper') {
+      const c = last.querySelector('.taper-champ'); c.value = ok ? q.accepte[0] : 'zzz'; c.dispatchEvent(new Event('input', {bubbles:true}));
+      [...last.querySelectorAll('.taper .gros-bouton')][0].click(); out.k = 'rep'; return out;
     }
     if (q.type === 'estimer') {
       const c = last.querySelector('.lb-range');
@@ -129,7 +133,7 @@ async def main():
             await pg.add_init_script(FAST)
             await pg.goto("http://localhost:8200/", wait_until="load"); await pg.wait_for_timeout(500)
             for n in range(nparties):
-                lg = random.choice([10, 10, 15, 20, 30, 40, 49])
+                lg = random.choice([5, 7, 7, 10, 15, 20, int(sys.argv[4]) if len(sys.argv) > 4 else 54])
                 if n == 0 and not await pg.query_selector(".bande:last-child .durees"):
                     # la première partie démarre toute seule : lire sa longueur
                     pass

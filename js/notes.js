@@ -2,6 +2,14 @@
 // Même format que dans data.js. « objet » = type d'objet 3D, avec une variante après « : » si besoin.
 
 const S = {
+  cifLej: { nom: "Charts in France", titre: "Clip « Liberté, Egalité, Mbappé » : L.E.J. célèbre la victoire des Bleus", url: "https://www.chartsinfrance.net/L.E.J/news-107462.html" },
+  coccLej: { nom: "La Coccinelle", titre: "L.E.J – Liberté, Égalité", url: "https://www.lacoccinelle.net/paroles-officielles/1338687.html" },
+  novaNessie: { nom: "PBS NOVA", titre: "The Legend of Loch Ness", url: "https://www.pbs.org/wgbh/nova/lochness/legend3.html" },
+  hoaxNessie: { nom: "Museum of Hoaxes", titre: "The Loch Ness Monster and the Surgeon's Photo", url: "https://hoaxes.org/nessie.html" },
+  lsAnky: { nom: "Live Science", titre: "Ankylosaurus: Facts About the Armored Lizard", url: "https://www.livescience.com/25222-ankylosaurus.html" },
+  oqlfCadratin: { nom: "Office québécois de la langue française", titre: "Cadratin", url: "https://vitrinelinguistique.oqlf.gouv.qc.ca/fiche-gdt/fiche/26576846/cadratin" },
+  wikiCadratin: { nom: "Wikipédia", titre: "Cadratin", url: "https://fr.wikipedia.org/wiki/Cadratin" },
+  leftlionSimpson: { nom: "LeftLion", titre: "Simpsonwave: Meet the Guy Behind the Meme", url: "https://leftlion.co.uk/read/2018/july/simpsonwave/" },
   inpnCoucou: { nom: "INPN (Muséum national d'Histoire naturelle)", titre: "Cuculus canorus, coucou gris", url: "https://inpn.mnhn.fr/espece/cd_nom/3465" },
   abcHiboux: { nom: "American Bird Conservancy", titre: "Why Are Owl Legs So Long?", url: "https://abcbirds.org/news/why-are-owl-legs-so-long-the-science-behind-those-lengthy-bird-limbs/" },
   natgeoPizzly: { nom: "National Geographic", titre: "Grizzly-Polar Bear Hybrid Found—But What Does It Mean?", url: "https://www.nationalgeographic.com/animals/article/grizzly-polar-bear-hybrid-animals" },
@@ -643,6 +651,41 @@ export const SALLES_NOTES = [
     ],
     sources: [S.reussirCharolais],
     liens: [],
+  },
+  {
+    id: "nessie", cat: "histoire", objet: "nessie", nom: "Maquette de Nessie",
+    porte: "Un lac écossais et une photo célèbre",
+    questions: [],
+    sources: [S.novaNessie, S.hoaxNessie],
+    liens: [{ vers: "cachalot", porte: "Un vrai géant des profondeurs" }],
+  },
+  {
+    id: "ankylosaure", cat: "nature", objet: "ankylosaure", nom: "Ankylosaure miniature",
+    porte: "Un dinosaure en armure",
+    questions: [],
+    sources: [S.lsAnky],
+    liens: [{ vers: "pizzly", porte: "Un animal pas comme les autres" }],
+  },
+  {
+    id: "cadratin", cat: "mots", objet: "livre:jaune", nom: "Dictionnaire, tome C",
+    porte: "Un petit trait typographique",
+    questions: [],
+    sources: [S.wikiCadratin, S.oqlfCadratin],
+    liens: [{ vers: "manicule", porte: "Un autre signe d'imprimeur" }],
+  },
+  {
+    id: "simpsonwave", cat: "musique", objet: "vinyle:vapor", nom: "Vinyle rose néon",
+    porte: "Une série culte, un son rétro",
+    questions: [],
+    sources: [S.leftlionSimpson],
+    liens: [{ vers: "around", porte: "Encore de l'électro" }],
+  },
+  {
+    id: "lej", cat: "pop", objet: "micro:or", nom: "Micro doré",
+    porte: "Un trio, un hymne, un été 2018",
+    questions: [],
+    sources: [S.cifLej, S.coccLej],
+    liens: [{ vers: "zidane", porte: "Un autre Bleu de légende" }],
   },
 ];
 

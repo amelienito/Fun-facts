@@ -3,7 +3,7 @@
 
 import { SALLES_NOTES, FRISE_NOTES } from "./notes.js";
 
-export const VERIFIE_LE = "2026-10-25";
+export const VERIFIE_LE = "2026-10-26";
 
 export const CATEGORIES = [
   { id: "sciences", nom: "Sciences" },

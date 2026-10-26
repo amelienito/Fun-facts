@@ -263,8 +263,8 @@ export const QUESTIONS = {
     explication: "Un gris très foncé, appelé eigengrau (« gris intrinsèque » en allemand). Même sans lumière, le nerf optique continue de transmettre des signaux : une sorte de bruit de fond visuel.",
   }],
   naute: [{
-    type: "qcm", texte: "Astronaute pour les Américains, cosmonaute pour les Russes… et pour les Français ?",
-    choix: ["Spationaute", "Taïkonaute", "Aéronaute", "Stellonaute"], reponse: 0,
+    type: "taper", texte: "Astronaute pour les Américains, cosmonaute pour les Russes… et pour les Français ?",
+    indice: "S _ _ _ _ _ _ _ _ _ _", accepte: ["Spationaute"],
     explication: "Spationaute. Et pour les Chinois, on parle de taïkonaute. Selon le Larousse, ces distinctions s'effacent avec les équipages internationaux, et « astronaute » s'impose de plus en plus pour tout le monde.",
   }],
   albanais: [{
@@ -277,20 +277,49 @@ export const QUESTIONS = {
     choix: ["Une race de vache et un fromage", "Une race de vache et un vin", "Un fromage et une danse", "Une race de cheval et un vin"], reponse: 0,
     explication: "Une race de vache et un fromage. La race bovine charolaise est connue dans le monde entier, et le charolais est aussi un fromage de chèvre de Bourgogne, protégé par une appellation d'origine (AOP).",
   }],
+  nessie: [{
+    type: "taper", texte: "Comment surnomme-t-on le monstre du loch Ness ?",
+    indice: "N _ _ _ _ _", accepte: ["Nessie"],
+    explication: "Nessie, tout simplement, d'après le nom du lac.",
+  }, {
+    type: "qcm", texte: "La plus célèbre photo de Nessie, publiée en 1934, montrait en réalité…",
+    choix: ["Un sous-marin jouet avec une tête sculptée", "Un tronc d'arbre à la dérive", "Un éléphant de cirque en train de nager", "Une loutre photographiée de très près"], reponse: 0,
+    explication: "Un sous-marin jouet surmonté d'un cou et d'une tête de serpent de mer. Christian Spurling, qui avait fabriqué la maquette, l'a avoué en 1994, soixante ans plus tard.",
+  }],
+  ankylosaure: [{
+    type: "qcm", texte: "Au bout de sa queue, l'ankylosaure avait…",
+    choix: ["Une massue en os", "Un dard venimeux", "Une nageoire", "Une touffe de plumes"], reponse: 0,
+    explication: "Une massue en os : ses dernières vertèbres étaient soudées en une tige rigide terminée par un gros bloc osseux. Selon une étude, un coup pouvait briser les os d'un prédateur.",
+  }],
+  cadratin: [{
+    type: "qcm", texte: "Le « cadratin », qui donne son nom au tiret long (—) et au demi-cadratin (–), vient d'un mot latin qui veut dire…",
+    choix: ["« Carré »", "« Trait »", "« Plume »", "« Page »"], reponse: 0,
+    explication: "« Carré » (quadratus) : le cadratin est un carré aussi large que la police est haute. Le tiret demi-cadratin en fait la moitié.",
+  }],
+  simpsonwave: [{
+    type: "qcm", texte: "La « simpsonwave », apparue sur YouTube en 2016, c'est…",
+    choix: ["Des extraits des Simpson montés sur de la musique vaporwave", "Une coiffure inspirée de celle de Marge", "Une danse tirée d'un épisode culte", "Les mèmes sur les « prédictions » des Simpson"], reponse: 0,
+    explication: "Des scènes des Simpson filtrées façon vieille VHS, sur de la vaporwave. Le genre a été lancé en février 2016 par Lucien Hughes, un étudiant de Nottingham.",
+  }],
+  lej: [{
+    type: "taper", texte: "Après la victoire des Bleus au Mondial 2018, le trio L.E.J sort un hymne : « Liberté, Égalité… » ?",
+    indice: "M _ _ _ _ _", accepte: ["Mbappé"],
+    explication: "Mbappé ! Le clip « Liberté, Égalité, Mbappé » sort fin juillet 2018, pour le meilleur jeune joueur du Mondial, 19 ans à l'époque.",
+  }],
 };
 
 // Séries à compléter dans la collection.
 export const SERIES = [
-  { id: "vivant", nom: "Le vivant", ids: ["coucou", "hiboux", "pizzly", "dragonnier", "cachalot", "requins"] },
+  { id: "vivant", nom: "Le vivant", ids: ["coucou", "hiboux", "pizzly", "dragonnier", "cachalot", "requins", "ankylosaure"] },
   { id: "corps", nom: "Le corps", ids: ["cerveau", "etrier", "eigengrau"] },
   { id: "physique", nom: "Physique", ids: ["tumbler", "femto", "eiffel"] },
-  { id: "histoire", nom: "Histoire", ids: ["farriner", "melos", "dexaie", "cleopatre"] },
+  { id: "histoire", nom: "Histoire", ids: ["farriner", "melos", "dexaie", "cleopatre", "nessie"] },
   { id: "arts", nom: "Beaux-arts", ids: ["bosch", "bocklin", "droste", "beksinski", "statue"] },
   { id: "ecrans", nom: "Écrans", ids: ["quebec", "katerine", "cage", "trump", "mclain"] },
   { id: "manettes", nom: "Manettes", ids: ["mouthwashing", "forhonor", "ecureuil", "justin", "nintendo", "eswc"] },
-  { id: "stades", nom: "Stades", ids: ["zidane", "baseball", "fifa"] },
-  { id: "disques", nom: "Disques", ids: ["around", "bestof", "ritz", "zoubida", "grenoble"] },
-  { id: "mots", nom: "Dictionnaire", ids: ["glabre", "laudatif", "berezina", "noosphere", "poioumenon", "manicule", "naute", "albanais", "charolais"] },
+  { id: "stades", nom: "Stades", ids: ["zidane", "baseball", "fifa", "lej"] },
+  { id: "disques", nom: "Disques", ids: ["around", "bestof", "ritz", "zoubida", "grenoble", "simpsonwave"] },
+  { id: "mots", nom: "Dictionnaire", ids: ["glabre", "laudatif", "berezina", "noosphere", "poioumenon", "manicule", "naute", "albanais", "charolais", "cadratin"] },
 ];
 
 // Pépites : les faits les plus étonnants, qui rapportent double.

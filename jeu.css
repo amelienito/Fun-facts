@@ -589,3 +589,12 @@ dialog.objet-dlg { background: radial-gradient(ellipse at 50% 40%, #fff6e0, #f1e
 .placer .lb-frise { margin-top: 40px; }
 .passer-intermede { display: inline-block; margin: 8px 0 0; font-size: 0.9rem; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; opacity: 0.8; }
 .bande.passe { min-height: 0; padding-top: 18px; padding-bottom: 18px; }
+
+/* Réponse à taper */
+.taper { max-width: 640px; margin-top: 12px; }
+.taper-indice { font-family: "Press Start 2P", monospace; font-size: 13px; letter-spacing: .25em; margin: 0 0 10px; opacity: .8; }
+.taper-champ { width: 100%; box-sizing: border-box; font: inherit; font-size: 22px; color: inherit; background: color-mix(in srgb, currentColor 7%, transparent); border: 0; border-bottom: 3px solid currentColor; border-radius: 10px 10px 0 0; padding: 12px 14px; outline: none; }
+.taper-champ:focus { background: color-mix(in srgb, currentColor 12%, transparent); }
+.taper-champ:disabled { opacity: .75; }
+.taper-actions { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; margin-top: 12px; }
+.taper.fini .taper-actions { display: none; }
