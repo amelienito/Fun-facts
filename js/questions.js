@@ -283,10 +283,10 @@ export const PEPITES = ["quebec", "bosch", "cleopatre", "requins", "katerine", "
 
 export const NIVEAUX = [
   { xp: 0, nom: "Curieux" },
-  { xp: 60, nom: "Fouineur" },
-  { xp: 150, nom: "Dénicheur" },
-  { xp: 280, nom: "Érudit" },
-  { xp: 450, nom: "Savant" },
-  { xp: 700, nom: "Encyclopédiste" },
-  { xp: 1000, nom: "Oracle" },
+  { xp: 3000, nom: "Fouineur" },
+  { xp: 7500, nom: "Dénicheur" },
+  { xp: 14000, nom: "Érudit" },
+  { xp: 22500, nom: "Savant" },
+  { xp: 35000, nom: "Encyclopédiste" },
+  { xp: 50000, nom: "Oracle" },
 ];

@@ -387,3 +387,6 @@ dialog.objet-dlg { background: radial-gradient(ellipse at 50% 40%, #fff6e0, #f1e
 .ligne-code { display: flex; gap: 12px; align-items: center; }
 .champ-code { width: 9.5em; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--nuit); background: var(--creme); font: 700 1.1rem var(--corps); letter-spacing: 0.08em; text-transform: uppercase; }
 .sauvegarde .code { white-space: nowrap; }
+
+.reaction { font-style: italic; }
+.hyper { font-size: .9em; opacity: .8; }

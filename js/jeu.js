@@ -1,5 +1,6 @@
 import { SALLES, VERIFIE_LE } from "./data.js";
 import { QUESTIONS, SERIES, PEPITES, NIVEAUX } from "./questions.js";
+import { REACTIONS } from "./reactions.js";
 import * as nuage from "./nuage.js";
 
 /* ---------- Outils ---------- */
@@ -52,14 +53,15 @@ const etat = (() => {
   return {
     trouves: e.trouves || {},
     pistes: Array.isArray(e.pistes) ? e.pistes : [],
-    xp: e.xp || 0,
+    xp: (e.echelle === 50 ? 1 : 50) * (e.xp || 0),
     record: e.record || 0,
     son: e.son !== false,
     typo: e.typo || "fraunces",
     pepiteGarantie: !!e.pepiteGarantie,
     longueur: e.longueur || 10,
     proposerDuree: !!e.proposerDuree,
-    meilleurs: e.meilleurs || {},
+    meilleurs: Object.fromEntries(Object.entries(e.meilleurs || {}).map(([k, v]) => [k, (e.echelle === 50 ? 1 : 50) * v])),
+    echelle: 50,
     code: e.code || "",
   };
 })();
@@ -304,6 +306,15 @@ function poser(s, qi, z) {
   if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
 }
 
+const LOUANGES = ["Bien vu.", "Exact. Bravo !", "Magistral.", "Impressionnant.", "Légendaire.", "Du jamais vu.", "Hors catégorie."];
+const CHUTES = ["Raté.", "Perdu, mais tu sais maintenant.", "Pas cette fois.", "Aïe."];
+const EXCES = [
+  "Plus personne sur Terre ne répond aussi bien que toi en ce moment. (Phrase non vérifiée.)",
+  "Les historiens ont été prévenus. (Phrase non vérifiée.)",
+  "Un comité d'experts t'applaudit à l'instant. (Phrase non vérifiée.)",
+  "Tu viens de battre un record du monde. (Phrase non vérifiée.)",
+];
+
 function repondre(s, qi, z, reps, bouton, val) {
   if (reps.classList.contains("fini")) return;
   reps.classList.add("fini");
@@ -318,14 +329,14 @@ function repondre(s, qi, z, reps, bouton, val) {
   const r = bouton.getBoundingClientRect();
   let gain;
   if (juste) {
-    gain = 10 * multiplicateur() * (estPepite(s.id) ? 2 : 1);
+    gain = 500 * multiplicateur() * (estPepite(s.id) ? 2 : 1);
     combo++;
     etat.record = Math.max(etat.record, combo);
     SONS.juste(combo);
     if (estPepite(s.id)) setTimeout(SONS.pepite, 160);
     confettis(r.left + r.width / 2, r.top + r.height / 2, estPepite(s.id) ? ["#FFC93C", "#FFE08A", "#FFF4D0"] : ["#15131A", "#FBF5E9", "#FFC93C", "#3D5AFE"]);
   } else {
-    gain = 2;
+    gain = 100;
     combo = 0;
     SONS.faux();
     reps.classList.add("secoue");
@@ -347,8 +358,13 @@ function repondre(s, qi, z, reps, bouton, val) {
       nuage.compterReponse(cleQ, juste);
     });
   }
+  const react = REACTIONS[`${s.id}:${qi}`];
+  const titre = juste ? LOUANGES[Math.min(LOUANGES.length - 1, Math.max(0, combo - 1))] : CHUTES[Math.floor(Math.random() * CHUTES.length)];
+  const hyper = juste && combo >= 3 ? EXCES[Math.floor(Math.random() * EXCES.length)] : "";
   const lignes = [
-    h("p", { class: "verdict" }, h("b", null, juste ? "Bien vu." : "Raté."), statJoueurs, h("span", { class: "gain" }, juste ? `+${gain} points${multiplicateur() > 1 && combo > 1 ? ` · combo de ${combo}` : ""}` : `+${gain} points pour avoir appris quelque chose`)),
+    h("p", { class: "verdict" }, h("b", null, titre), statJoueurs, h("span", { class: "gain" }, juste ? `+${gain.toLocaleString("fr-FR")} points${multiplicateur() > 1 && combo > 1 ? ` · combo de ${combo}` : ""}` : `+${gain} points pour avoir appris quelque chose`)),
+    hyper ? h("p", { class: "hyper" }, hyper) : null,
+    react ? h("p", { class: "reaction" }, juste ? react.bravo : react.rate) : null,
     h("p", null, q.explication),
   ];
   const total = QUESTIONS[s.id].length;
@@ -385,9 +401,9 @@ function repondre(s, qi, z, reps, bouton, val) {
   if (nouveau && nSerie === serie.ids.length) {
     setTimeout(() => {
       SONS.serie();
-      gagner(50);
+      gagner(2500);
       if (partie) partie.score += 50;
-      annoncer("Série complète", serie.nom, `Tu as trouvé les ${serie.ids.length} faits de la série. +50 points.`);
+      annoncer("Série complète", serie.nom, `Tu as trouvé les ${serie.ids.length} faits de la série. +2 500 points.`);
     }, 900);
   } else if (nouveau && serie.ids.length - nSerie === 1) {
     setTimeout(() => toast("Plus qu'un fait pour compléter ", h("b", null, serie.nom)), 800);
@@ -507,15 +523,15 @@ function afficherMenteur(ensuite) {
         if (!items[k].vraie) c.append(h("span", { class: "a-corr" }, `Mensonge. La bonne réponse : ${items[k].bonne}`));
       });
       const r = zone.getBoundingClientRect();
-      if (juste) { combo++; SONS.juste(combo); confettis(innerWidth / 2, r.top + 40, ["#15131A", "#FBF5E9", "#FFC93C"]); gagner(25, innerWidth / 2, r.top); if (partie) { partie.score += 25; partie.bonnes++; } }
-      else { combo = 0; SONS.faux(); zone.classList.add("secoue"); gagner(2); if (partie) partie.score += 2; }
+      if (juste) { combo++; SONS.juste(combo); confettis(innerWidth / 2, r.top + 40, ["#15131A", "#FBF5E9", "#FFC93C"]); gagner(1250, innerWidth / 2, r.top); if (partie) { partie.score += 1250; partie.bonnes++; } }
+      else { combo = 0; SONS.faux(); zone.classList.add("secoue"); gagner(100); if (partie) partie.score += 100; }
       if (partie) partie.questions++;
-      vider(fin, h("p", { class: "verdict" }, h("b", null, juste ? "Démasqué." : "Il t'a eu."), h("span", { class: "gain" }, juste ? "+25 points" : "+2 points")),
+      vider(fin, h("p", { class: "verdict" }, h("b", null, juste ? "Démasqué." : "Il t'a eu."), h("span", { class: "gain" }, juste ? "+1 250 points" : "+100 points")),
         h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
     } }, carteAffirmation(a)));
   });
   vider(b,
-    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "+25")),
+    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "+1 250")),
     h("h1", { class: "question", tabindex: "-1" }, "Le menteur"),
     h("p", { class: "consigne" }, "Ces trois réponses viennent de faits que tu as trouvés. Une seule est fausse : touche-la."),
     zone, fin);
@@ -539,7 +555,7 @@ function afficherEclair(ensuite) {
     fini = true;
     cancelAnimationFrame(raf);
     boutons.remove();
-    const pts = bons * 5 + (bons === items.length ? 20 : 0);
+    const pts = bons * 250 + (bons === items.length ? 1000 : 0);
     if (bons) { SONS.juste(bons); gagner(pts, innerWidth / 2, carte.getBoundingClientRect().top); } else SONS.faux();
     if (partie) { partie.score += pts; partie.questions++; if (bons >= items.length / 2) partie.bonnes++; }
     vider(carte, h("span", { class: "a-p" }, bons === items.length ? "Sans faute." : `${bons} sur ${items.length}.`));
