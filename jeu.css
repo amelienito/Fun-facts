@@ -159,11 +159,12 @@ html[data-typo="instrument"] .verdict b { font-size: 2.2rem; }
 .sources { font-size: 0.9375rem; line-height: 1.45; }
 .sources a { font-weight: 700; text-underline-offset: 3px; }
 .acquis {
-  display: flex; align-items: center; gap: 12px; margin: 22px 0 0; padding: 10px 14px 10px 10px;
-  border-radius: 14px; background: var(--nuit); color: var(--creme); font-size: 1rem; width: fit-content; max-width: 100%;
+  display: flex; align-items: center; gap: 10px; margin: 18px 0 0; padding: 6px 8px 6px 6px;
+  border-radius: 999px; background: var(--nuit); color: var(--creme); font-size: 0.9rem; width: fit-content; max-width: 100%;
 }
-.acquis img { width: 46px; height: 46px; object-fit: contain; }
-.acquis .jauge { display: block; height: 6px; margin-top: 5px; border-radius: 3px; background: rgba(251, 245, 233, 0.18); overflow: hidden; }
+.acquis img { width: 30px; height: 30px; object-fit: contain; }
+.acquis b { white-space: nowrap; }
+.acquis .jauge { display: block; flex: 0 0 56px; height: 6px; border-radius: 3px; background: rgba(251, 245, 233, 0.18); overflow: hidden; }
 .acquis .jauge i { display: block; height: 100%; background: var(--or); border-radius: 3px; transition: width 0.8s 0.2s cubic-bezier(0.3, 1.4, 0.5, 1); }
 
 .pistes-zone { margin-top: 38px; }
@@ -225,11 +226,12 @@ html[data-typo="instrument"] .verdict b { font-size: 2.2rem; }
 }
 .flotteur {
   position: fixed; z-index: 30; pointer-events: none; transform: translate(-50%, -50%);
-  font-family: var(--titre); font-weight: 800; font-size: 1.6rem; color: var(--nuit);
-  background: var(--or); padding: 4px 12px; border-radius: 999px;
+  font-family: "Bungee", var(--titre); font-weight: 400; font-size: 2rem; color: #FFE14D; font-style: normal;
+  -webkit-text-stroke: 2px #15131A; paint-order: stroke fill; text-shadow: 3px 3px 0 #FF3EA5, 5px 5px 0 #15131A;
+  white-space: nowrap;
   animation: monte 1.1s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
 }
-@keyframes monte { 0% { opacity: 0; transform: translate(-50%, -20%) scale(0.6); } 20% { opacity: 1; transform: translate(-50%, -60%) scale(1.1); } 100% { opacity: 0; transform: translate(-50%, -260%) scale(1); } }
+@keyframes monte { 0% { opacity: 0; transform: translate(-50%, -20%) scale(0.4) skewX(-10deg); } 20% { opacity: 1; transform: translate(-50%, -60%) scale(1.25) skewX(-10deg); } 100% { opacity: 0; transform: translate(-50%, -260%) scale(1) skewX(-10deg); } }
 
 /* ---------- Annonces (niveau, série) ---------- */
 .annonce {
@@ -317,7 +319,7 @@ button.objet-zone { padding: 0; cursor: default; }
 }
 .revele button.objet-zone:hover::after, .revele button.objet-zone:focus-visible::after { opacity: 1; }
 button.acquis { text-align: left; cursor: zoom-in; }
-.acquis .contempler, .fiche-objet .contempler { margin-left: 6px; padding: 4px 10px; border-radius: 999px; background: var(--or); color: var(--nuit); font-weight: 800; font-size: 0.8rem; }
+.acquis .contempler, .fiche-objet .contempler { margin-left: 2px; padding: 4px 10px; border-radius: 999px; background: var(--or); color: var(--nuit); font-weight: 800; font-size: 0.8rem; }
 .fiche-objet { display: flex; align-items: center; gap: 4px; padding: 0; cursor: zoom-in; }
 .consigne { max-width: 34rem; margin: 14px 0 0; font-size: 1.1rem; }
 
@@ -346,7 +348,7 @@ button.acquis { text-align: left; cursor: zoom-in; }
 
 .fin-partie .titre-fin { font-size: calc(var(--titre-taille) * 1.35); }
 .score-ligne { display: flex; align-items: baseline; gap: 12px; margin: 10px 0 0; }
-.score-geant { font-family: var(--titre); font-weight: var(--titre-graisse); font-variation-settings: var(--titre-variation); font-size: clamp(4rem, 20vw, 9rem); line-height: 0.9; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.score-geant { font-family: "Bungee", var(--titre); font-weight: 400; color: #FFE14D; -webkit-text-stroke: 3px #15131A; paint-order: stroke fill; text-shadow: 5px 5px 0 #FF3EA5, 9px 9px 0 #15131A; font-size: clamp(3rem, 14vw, 7rem); line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: 0; }
 .score-ligne > span:last-child { font-weight: 800; font-size: 1.3rem; }
 .stats { list-style: none; padding: 0; margin: 22px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; max-width: 44rem; }
 .stats li { padding: 12px 14px; border-radius: 18px; border: 2.5px solid currentColor; font-weight: 600; font-size: 0.95rem; line-height: 1.2; }
@@ -465,24 +467,24 @@ dialog.objet-dlg { background: radial-gradient(ellipse at 50% 40%, #fff6e0, #f1e
 .paire.choisi { border-color: currentColor; transform: scale(1.03); }
 .paire.fait { background: var(--texte); color: var(--fond); cursor: default; }
 
-/* ---------- Bannière géante, façon arcade ---------- */
+/* ---------- Bannière géante, façon jeu vidéo (Scott Pilgrim) ---------- */
 @font-face { font-family: "Press Start 2P"; src: url("fonts/press-start-2p.woff") format("woff"); font-display: swap; }
+@font-face { font-family: "Bungee"; src: url("fonts/bungee.woff") format("woff"); font-display: swap; }
 .banniere {
-  position: fixed; inset: 0; z-index: 60; pointer-events: none;
-  display: grid; place-content: center; text-align: center; gap: 18px; padding: 0 12px;
-  font-family: "Press Start 2P", monospace; text-transform: uppercase;
+  position: fixed; inset: 0; z-index: 60; pointer-events: none; isolation: isolate;
+  display: grid; place-content: center; text-align: center; gap: 16px; padding: 0 14px;
   animation: banniere 1.2s steps(1, end) forwards;
 }
-.banniere::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 15rem; transform: translateY(-50%); background: rgba(21, 19, 26, 0.88); z-index: -1; }
-.banniere { isolation: isolate; }
 .banniere b {
-  font-weight: 400; font-size: clamp(1.9rem, 10vw, 5rem); line-height: 1.25; color: #FFE14D;
-  text-shadow: 4px 4px 0 #E8341C;
-  animation: pixelpop 1.2s steps(4, end) forwards;
+  font-family: "Bungee", sans-serif; font-weight: 400; font-size: clamp(2.6rem, 14vw, 7rem); line-height: 1; text-transform: uppercase;
+  color: #FFFFFF; -webkit-text-stroke: 4px #15131A; paint-order: stroke fill;
+  text-shadow: 5px 5px 0 #FF3EA5, 9px 9px 0 #3D5AFE, 12px 12px 0 #15131A;
+  transform: skewX(-10deg) rotate(-4deg);
+  animation: pop-jv 1.2s cubic-bezier(0.2, 1.6, 0.4, 1) forwards;
 }
-.banniere span { font-size: clamp(0.6rem, 2.8vw, 0.95rem); line-height: 1.6; color: #FBF5E9; text-shadow: 2px 2px 0 #15131A; }
-@keyframes pixelpop { 0% { transform: scale(0.3); } 15% { transform: scale(1.15); } 25%, 100% { transform: scale(1); } }
-@keyframes banniere { 0% { opacity: 1; } 70% { opacity: 1; } 76% { opacity: 0; } 82% { opacity: 1; } 88% { opacity: 0; } 94% { opacity: 1; } 100% { opacity: 0; } }
+.banniere span { font-family: "Press Start 2P", monospace; font-size: clamp(0.6rem, 2.8vw, 0.95rem); line-height: 1.6; text-transform: uppercase; color: #FFE14D; background: #15131A; padding: 8px 12px; border-radius: 4px; justify-self: center; }
+@keyframes pop-jv { 0% { transform: skewX(-10deg) rotate(-4deg) scale(0.2); } 18% { transform: skewX(-10deg) rotate(-4deg) scale(1.15); } 30%, 100% { transform: skewX(-10deg) rotate(-4deg) scale(1); } }
+@keyframes banniere { 0%, 78% { opacity: 1; } 84% { opacity: 0; } 90% { opacity: 1; } 100% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .banniere { display: none; } }
 @media (max-width: 560px) {
   .paires { grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr); gap: 8px; }
@@ -491,3 +493,16 @@ dialog.objet-dlg { background: radial-gradient(ellipse at 50% 40%, #fff6e0, #f1e
   .paire.mot { font-size: 1rem; overflow-wrap: anywhere; }
   .paire.def { font-size: 0.875rem; }
 }
+
+@media (max-width: 560px) { .combo-mot { display: none; } .marque { font-size: 0.9rem; } }
+
+/* ---------- Sélection multiple ---------- */
+.multi { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 22px 0 16px; max-width: 40rem; }
+.tuile { min-height: 64px; padding: 12px 14px; border-radius: 18px; text-align: left; font-weight: 700; line-height: 1.2; border: 3px solid currentColor; transition: transform 0.15s, background 0.2s; }
+.tuile[aria-pressed="true"] { background: var(--texte); color: var(--fond); transform: scale(1.03); }
+.multi.fini .tuile { cursor: default; }
+.multi.fini .tuile.barre { opacity: 0.45; text-decoration: line-through; }
+.multi.fini .tuile.bon { background: var(--texte); color: var(--fond); }
+.multi.fini .tuile.erreur, .multi.fini .tuile.oubli { outline: 4px dashed var(--texte); outline-offset: 3px; }
+.multi.fini .tuile.erreur::after { content: " ✗"; }
+.multi.fini .tuile.oubli::after { content: " · oublié"; font-weight: 500; }

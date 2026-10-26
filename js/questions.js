@@ -89,18 +89,14 @@ export const QUESTIONS = {
     explication: "Dans la boulangerie de Thomas Farriner, sur Pudding Lane. Ce boulanger était connu pour avoir fourni du pain à la Royal Navy.",
   }],
   melos: [{
-    type: "qcm", texte: "En 416 av. J.-C., l'île de Mélos veut rester neutre et en appelle à la justice. Que lui répond Athènes, selon Thucydide ?",
+    type: "qcm", texte: "Dans le « dialogue mélien » de Thucydide, les habitants de l'île de Mélos invoquent la justice pour rester neutres. Que leur répondent les Athéniens ?",
     choix: ["La justice ne vaut qu'entre égaux", "Un oracle a ordonné votre chute", "Vos ancêtres ont trahi Athènes", "Payez et vous serez épargnés"], reponse: 0,
-    explication: "« La justice ne vaut qu'entre égaux » : les forts font ce qu'ils peuvent, les faibles subissent ce qu'ils doivent. Mélos refuse de se soumettre. Athènes assiège l'île, tue les hommes et réduit les femmes et les enfants en esclavage. Le Loup et l'Agneau, version antique.",
+    explication: "Que la justice ne vaut qu'entre égaux : les forts font ce qu'ils peuvent, les faibles subissent ce qu'ils doivent. Thucydide reconstitue cette négociation de 416 av. J.-C., un texte encore étudié en relations internationales.",
   }],
   fifa: [{
     type: "qcm", texte: "Dans quelle ville la FIFA a-t-elle été fondée, en 1904 ?",
     choix: ["Paris", "Londres", "Zurich", "Bruxelles"], reponse: 0,
     explication: "À Paris, le 21 mai 1904, au 229 rue Saint-Honoré. La France, la Belgique, le Danemark, les Pays-Bas et la Suisse étaient présents ; l'Angleterre ne l'a rejointe qu'en 1905.",
-  }, {
-    type: "qcm", texte: "Et que veut dire le dernier « A » de FIFA ?",
-    choix: ["Association", "Amateur", "Américaine", "Athlétique"], reponse: 0,
-    explication: "Association : Fédération internationale de football association. Le nom officiel est en français, un héritage de sa fondation à Paris.",
   }],
   dexaie: [{
     type: "qcm", texte: "Que criaient les chevaliers normands en partant au combat ?",
@@ -156,6 +152,11 @@ export const QUESTIONS = {
     type: "qcm", texte: "Dans quel film de Noël Donald Trump fait-il une apparition ?",
     choix: ["Maman, j'ai encore raté l'avion", "Love Actually", "Elf", "Le Grinch"], reponse: 0,
     explication: "Maman, j'ai encore raté l'avion (1992). Il croise Kevin dans le hall de l'hôtel Plaza, qui lui appartenait. Selon le réalisateur Chris Columbus, cette apparition était la condition pour tourner dans l'hôtel.",
+  }, {
+    type: "multi", texte: "Et dans lesquels de ces films apparaît-il aussi ? Touche-les tous, puis valide.",
+    choix: ["Zoolander", "L'Amour sans préavis", "Wall Street : L'argent ne dort jamais", "Maman, j'ai raté l'avion (le premier)", "Retour vers le futur II", "Le Loup de Wall Street"],
+    bonnes: [0, 1, 2],
+    explication: "Zoolander (2001), L'Amour sans préavis (2002) et Wall Street : L'argent ne dort jamais (2010). Pas dans le premier Maman, j'ai raté l'avion. Et le Biff de Retour vers le futur II est seulement inspiré de lui.",
   }],
   mclain: [{
     type: "qcm", texte: "Dans quel film entend-on aussi la voix de GLaDOS, l'intelligence artificielle du jeu Portal ?",

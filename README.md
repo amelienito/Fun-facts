@@ -10,4 +10,4 @@ OSB Corporation présente : un terrier de faits vérifiés. Chaque réponse ouvr
 - `maquettes/` : les 3 maquettes de style (terrier, lampe, toile).
 - `notes-triees.md` : l'état de chaque note.
 
-Polices sous licence OFL (`fonts/`). 3D : three.js r186, licence MIT (`vendor/`).
+Polices sous licence OFL (`fonts/`). 3D : three.js r186, licence MIT (`vendor/`). Son d'air horn : SampleFocus (samplefocus.com/samples/airhorn-sfx), `sons/`.

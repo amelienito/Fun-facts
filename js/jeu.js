@@ -55,7 +55,6 @@ const etat = (() => {
     xp: (e.echelle === 50 ? 1 : 50) * (e.xp || 0),
     record: e.record || 0,
     son: e.son !== false,
-    typo: e.typo || "fraunces",
     pepiteGarantie: !!e.pepiteGarantie,
     longueur: e.longueur || 10,
     proposerDuree: !!e.proposerDuree,
@@ -142,6 +141,7 @@ function deverrouillerSon() {
     const muet = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=");
     muet.setAttribute("playsinline", ""); muet.play().catch(() => {});
   } catch (_) {}
+  setTimeout(chargerHorn, 0);
   try { const a = ctx(); const b = a.createBuffer(1, 1, 22050); const src = a.createBufferSource(); src.buffer = b; src.connect(a.destination); src.start(0); } catch (_) {}
 }
 addEventListener("pointerdown", deverrouillerSon, { capture: true });
@@ -194,15 +194,12 @@ function majHud(anime) {
   $("btn-niveau").setAttribute("aria-label", `Niveau ${i + 1}, ${n.nom} : ${etat.xp} points${suiv ? `, prochain niveau à ${suiv.xp}` : ""}`);
   $("nb-trouves").textContent = `${nbTrouves()}/${TOTAL}`;
   $("btn-collection").setAttribute("aria-label", `Ma collection : ${nbTrouves()} faits sur ${TOTAL}`);
-  const np = etat.pistes.filter((id) => !etat.trouves[id]).length;
-  $("nb-pistes").textContent = np;
-  $("btn-pistes").setAttribute("aria-label", `${pluriel(np, "piste")} en attente`);
   if (partie) $("progression-partie").textContent = `${Math.min(partie.n, partie.total)}/${partie.total}`;
   $("progression-partie").hidden = !partie;
   const m = multiplicateur();
   const s = $("serie");
   s.hidden = m < 2;
-  s.textContent = `Combo ×${m}`;
+  s.replaceChildren(h("span", { class: "combo-mot" }, "Combo "), `×${m}`);
   if (anime) for (const id of anime) { const el = $(id); el.classList.remove("bump"); void el.offsetWidth; el.classList.add("bump"); }
 }
 
@@ -222,7 +219,7 @@ function gagner(points, x, y) {
     sauver();
     setTimeout(() => {
       SONS.niveau();
-      annoncer(`Niveau ${apres + 1}`, NIVEAUX[apres].nom, "Récompense : une pépite t'attend dans tes prochaines pistes.");
+      annoncer(`Niveau ${apres + 1}`, NIVEAUX[apres].nom, "Récompense : une pépite t'attend dans tes prochains choix.");
     }, 700);
   }
 }
@@ -306,7 +303,7 @@ function afficherFait(id, premier) {
   const suite = h("div", { class: "suite", hidden: true });
   vider(b,
     h("div", { class: "etiquettes" },
-      mystere ? h("span", { class: "etiq" }, h("span", { class: "nom-cache" }, "Série mystère"), h("span", { class: "nom-vrai" }, serie.nom)) : h("span", { class: "etiq" }, serie.nom),
+      mystere ? h("span", { class: "etiq" }, h("span", { class: "nom-cache" }, "Thème mystère"), h("span", { class: "nom-vrai" }, serie.nom)) : h("span", { class: "etiq" }, serie.nom),
       estPepite(id) ? h("span", { class: "etiq pepite" }, "Pépite ×2") : null,
       etat.trouves[id] ? h("span", { class: "etiq" }, "Déjà dans ta collection") : null),
     tete, suite);
@@ -318,6 +315,7 @@ function afficherFait(id, premier) {
 function poser(s, qi, z) {
   const q = QUESTIONS[s.id][qi];
   const total = QUESTIONS[s.id].length;
+  if (q.type === "multi") return poserMulti(s, qi, z, q, total);
   const frise = FRISES[`${s.id}:${qi}`];
   const opts = q.type === "vf"
     ? [["Vrai", true], ["Faux", false]]
@@ -354,20 +352,50 @@ function blocFrise(f) {
       h("span", null, h("b", null, f.droite.nom), f.droite.date ? h("small", null, f.droite.date) : null)));
 }
 
-const EXCES = [
-  "Plus personne sur Terre ne répond aussi bien que toi en ce moment. (Phrase non vérifiée.)",
-  "Les historiens ont été prévenus. (Phrase non vérifiée.)",
-  "Un comité d'experts t'applaudit à l'instant. (Phrase non vérifiée.)",
-  "Tu viens de battre un record du monde. (Phrase non vérifiée.)",
-];
+
+// Sélection multiple : on touche toutes les bonnes réponses, puis on valide.
+function poserMulti(s, qi, z, q, total) {
+  z.frise = null;
+  const grille = h("div", { class: "multi" });
+  const valider = h("button", { class: "gros-bouton", type: "button", disabled: true }, "Valider");
+  const tuiles = melanger(q.choix.map((c, i) => [c, i])).map(([c, i]) => {
+    const t = h("button", { class: "tuile", type: "button", "aria-pressed": "false", "data-i": i }, c);
+    t.addEventListener("click", () => {
+      if (grille.classList.contains("fini")) return;
+      t.setAttribute("aria-pressed", String(t.getAttribute("aria-pressed") !== "true"));
+      SONS.porte();
+      valider.disabled = !grille.querySelector('[aria-pressed="true"]');
+    });
+    grille.append(t);
+    return t;
+  });
+  valider.addEventListener("click", () => {
+    if (grille.classList.contains("fini")) return;
+    let fautes = 0;
+    for (const t of tuiles) {
+      const bonne = q.bonnes.includes(Number(t.dataset.i)), prise = t.getAttribute("aria-pressed") === "true";
+      t.classList.add(bonne ? "bon" : "barre");
+      if (bonne !== prise) { fautes++; t.classList.add(bonne ? "oubli" : "erreur"); }
+      t.disabled = true;
+    }
+    valider.remove();
+    repondre(s, qi, z, grille, grille, fautes === 0);
+  });
+  vider(z.tete,
+    z.zoneObjet,
+    total > 1 ? h("p", { class: "q-num" }, `Question ${qi + 1} sur ${total}`) : null,
+    h("h1", { class: `question ${q.texte.length > 72 ? "longue" : ""}`, tabindex: "-1" }, q.texte),
+    grille, valider);
+  if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
+}
 
 function repondre(s, qi, z, reps, bouton, val) {
   if (reps.classList.contains("fini")) return;
   reps.classList.add("fini");
   if (z.frise) setTimeout(() => z.frise.classList.add("revelee"), 250);
   const q = QUESTIONS[s.id][qi];
-  const juste = val === q.reponse;
-  for (const x of reps.querySelectorAll(".rep")) {
+  const juste = q.type === "multi" ? val : val === q.reponse;
+  if (q.type !== "multi") for (const x of reps.querySelectorAll(".rep")) {
     const v = x.dataset.v === "true" ? true : x.dataset.v === "false" ? false : Number(x.dataset.v);
     x.classList.add(v === q.reponse ? "bon" : "barre");
     if (x === bouton) x.classList.add("choisi");
@@ -410,10 +438,8 @@ function repondre(s, qi, z, reps, bouton, val) {
     });
   }
   const titre = juste ? "Bien vu." : "Raté.";
-  const hyper = juste && combo >= 3 ? EXCES[Math.floor(Math.random() * EXCES.length)] : "";
   const lignes = [
     h("p", { class: "verdict" }, h("b", null, titre), statJoueurs, h("span", { class: "gain" }, juste ? `+${gain.toLocaleString("fr-FR")} points${multiplicateur() > 1 && combo > 1 ? ` · combo de ${combo}` : ""}` : `+${gain} points pour avoir appris quelque chose`)),
-    hyper ? h("p", { class: "hyper" }, hyper) : null,
     h("p", null, q.explication),
   ];
   const total = QUESTIONS[s.id].length;
@@ -433,12 +459,11 @@ function repondre(s, qi, z, reps, bouton, val) {
   const serie = serieDe[s.id];
   const nSerie = serie.ids.filter((id) => etat.trouves[id]).length;
   if (s.saviezVous) lignes.push(h("p", { class: "saviez" }, h("b", null, "Le saviez-vous ?"), s.saviezVous));
-  if (s.note) lignes.push(h("p", { class: "note" }, h("b", null, "Note de vérification : "), s.note));
   lignes.push(blocSources(s.sources));
   const jauge = h("i", { style: "width:0%" });
   lignes.push(h("button", { class: "acquis", type: "button", onclick: () => ouvrirObjet(s.id), "aria-label": `Contempler : ${s.nom}` },
     imageObjet(s.objet),
-    h("div", null, nouveau ? "Ajouté à ta collection" : "Déjà dans ta collection", h("br"), h("b", null, `${serie.nom} : ${nSerie}/${serie.ids.length}`), h("span", { class: "jauge" }, jauge)),
+    h("b", null, `${nouveau ? "+1 " : ""}${serie.nom} ${nSerie}/${serie.ids.length}`), h("span", { class: "jauge" }, jauge),
     h("span", { class: "contempler" }, "Contempler")));
   requestAnimationFrame(() => requestAnimationFrame(() => (jauge.style.width = `${(nSerie / serie.ids.length) * 100}%`)));
   if (partie && partie.n >= partie.total) {
@@ -451,8 +476,8 @@ function repondre(s, qi, z, reps, bouton, val) {
     setTimeout(() => {
       SONS.serie();
       gagner(2500);
-      if (partie) partie.score += 50;
-      annoncer("Série complète", serie.nom, `Tu as trouvé les ${serie.ids.length} faits de la série. +2 500 points.`);
+      if (partie) partie.score += 2500;
+      annoncer("Thème complet", serie.nom, `Tu as trouvé les ${serie.ids.length} faits de ce thème. +2 500 points.`);
     }, 900);
   } else if (nouveau && serie.ids.length - nSerie === 1) {
     setTimeout(() => toast("Plus qu'un fait pour compléter ", h("b", null, serie.nom)), 800);
@@ -500,37 +525,31 @@ function choisirPortes(s) {
 function blocPortes(s, bande) {
   const portes = choisirPortes(s);
   if (!portes.length) {
-    const reste = etat.pistes.filter((id) => !etat.trouves[id]);
     return h("div", { class: "pistes-zone" },
-      h("p", null, reste.length ? "Ce terrier-là est épuisé." : "Tu as tout trouvé."),
-      reste.length ? h("button", { class: "lien-texte", type: "button", onclick: ouvrirPistes }, `Reprendre une de tes ${pluriel(reste.length, "piste")} en attente`) : h("button", { class: "lien-texte", type: "button", onclick: ouvrirCollection }, "Voir ma collection complète"));
+      h("p", null, "Tu as tout trouvé."),
+      h("button", { class: "lien-texte", type: "button", onclick: ouvrirCollection }, "Voir ma collection"));
   }
   const zone = h("div", { class: "portes" });
   const boutons = portes.map((c) => {
     const pep = estPepite(c.id);
-    const b = h("button", { class: `porte ${pep ? "pepite" : ""}`, type: "button", "aria-label": `Suivre la piste ${serieDe[c.id].nom}${pep ? ", pépite" : ""}` },
+    const b = h("button", { class: `porte ${pep ? "pepite" : ""}`, type: "button", "aria-label": `Thème ${serieDe[c.id].nom}${pep ? ", pépite" : ""}` },
       imageObjet(c.objet),
       h("span", { class: "p-serie" }, serieDe[c.id].nom),
-      h("span", { class: "p-type" }, etat.trouves[c.id] ? "À revoir" : pep ? "Pépite" : etat.pistes.includes(c.id) ? "Piste en attente" : "Nouvelle piste"));
+      h("span", { class: "p-type" }, etat.trouves[c.id] ? "À revoir" : pep ? "Pépite ×2" : "Nouveau"));
     b.addEventListener("click", () => {
       if (b.disabled) return;
       SONS.porte();
       boutons.forEach((o) => (o.disabled = true));
       b.classList.add("choisie");
-      // L'autre piste n'est pas perdue : elle part dans les pistes en attente.
-      for (const o of portes) if (o !== c && !etat.pistes.includes(o.id)) etat.pistes.push(o.id);
       if (estPepite(c.id)) etat.pepiteGarantie = false;
       sauver();
-      majHud(portes.length > 1 ? ["btn-pistes"] : null);
-      if (portes.length > 1) toast("L'autre piste est gardée dans tes ", h("b", null, "pistes en attente"));
       suivant(c.id);
     });
     zone.append(b);
     return b;
   });
   return h("div", { class: "pistes-zone" },
-    h("p", null, portes.length > 1 ? "Deux pistes s'ouvrent. Laquelle tu suis ?" : "Une piste s'ouvre."),
-    portes.length > 1 ? h("p", { class: "aide" }, "L'autre ne sera pas perdue : elle t'attendra dans tes pistes.") : null,
+    h("p", null, "Et maintenant ?"),
     zone);
 }
 
@@ -663,7 +682,12 @@ function afficherPaires(ensuite, exclu) {
 function afficherEclair(ensuite, exclu) {
   const DUREE = 25;
   const tirees = melanger(affirmationsPossibles(exclu)).slice(0, 8);
-  const items = melanger(tirees.map((t, k) => affirmation(t, k < Math.ceil(tirees.length / 2))));
+  // Vrai et faux bien alternés au hasard : jamais trois fois de suite la même réponse.
+  let items = [];
+  for (let essai = 0; essai < 60; essai++) {
+    items = melanger(tirees.map((t, k) => affirmation(t, k < Math.ceil(tirees.length / 2))));
+    if (!items.some((x, k) => k >= 2 && x.vraie === items[k - 1].vraie && x.vraie === items[k - 2].vraie)) break;
+  }
   const reponses = [];
   const b = nouvelleBande("intermede eclair");
   let i = 0, bons = 0, fini = false, debut = 0, raf = 0;
@@ -775,7 +799,7 @@ function finPartie() {
       h("li", null, h("b", null, p.gagnes.length), p.gagnes.length > 1 ? "objets gagnés" : "objet gagné"),
       h("li", null, h("b", null, `${nbTrouves()}/${TOTAL}`), "dans ta collection")),
     p.gagnes.length ? h("div", { class: "gagnes" }, p.gagnes.map((id) => h("button", { class: "gagne", type: "button", onclick: () => ouvrirObjet(id), "aria-label": `Contempler : ${salleParId[id].nom}` }, imageObjet(salleParId[id].objet)))) : null,
-    series.length ? h("p", { class: "series-avance" }, "Séries qui avancent : ", series.map((o, i) => [h("b", null, `${o.x.nom} ${o.apres}/${o.x.ids.length}`), i < series.length - 1 ? ", " : "."])) : null,
+    series.length ? h("p", { class: "series-avance" }, "Thèmes qui avancent : ", series.map((o, i) => [h("b", null, `${o.x.nom} ${o.apres}/${o.x.ids.length}`), i < series.length - 1 ? ", " : "."])) : null,
     ancien && !record ? h("p", { class: "consigne" }, `Ton record sur ${p.total} questions : ${ancien} points.`) : null,
     h("h2", { class: "sous-titre" }, "On remet ça ?"),
     choixDuree(rejouer));
@@ -791,51 +815,32 @@ function finPartie() {
 
 /* ---------- La célébration : air horn et canon à confettis ---------- */
 
-// Air horn de la culture meme (MLG) : une anche criarde, une seule note, coupée net. « BWAP BWAP BWAAAP ».
-function airHorn(debut = 0, coups = [[0, 0.17], [0.23, 0.17], [0.46, 0.5]], puissance = 1) {
-  if (!etat.son) return;
-  try {
-    const a = ctx();
-    const sature = a.createWaveShaper();
-    const courbe = new Float32Array(2048);
-    for (let k = 0; k < 2048; k++) { const x = (k / 1024) - 1; courbe[k] = Math.tanh(x * 6); }
-    sature.curve = courbe;
-    const brillance = a.createBiquadFilter();
-    brillance.type = "peaking"; brillance.frequency.value = 2600; brillance.gain.value = 9; brillance.Q.value = 0.9;
-    const coupeBas = a.createBiquadFilter();
-    coupeBas.type = "highpass"; coupeBas.frequency.value = 220;
-    const sortieHorn = a.createGain(); sortieHorn.gain.value = 0.55 * puissance;
-    sature.connect(brillance).connect(coupeBas).connect(sortieHorn).connect(sortie);
-    const F = 415;
-    for (const [t0, d] of coups) {
-      const t = a.currentTime + debut + t0;
-      const g = a.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(1, t + 0.008);
-      g.gain.setValueAtTime(1, t + d - 0.015);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      // Battement de l'anche.
-      const lfo = a.createOscillator(), prof = a.createGain();
-      lfo.frequency.value = 28; prof.gain.value = 0.18;
-      lfo.connect(prof).connect(g.gain);
-      lfo.start(t); lfo.stop(t + d + 0.02);
-      g.connect(sature);
-      for (const [type, det, vol] of [["sawtooth", -18, 0.32], ["sawtooth", 16, 0.32], ["square", 0, 0.22], ["sawtooth", 1200, 0.12]]) {
-        const o = a.createOscillator();
-        o.type = type;
-        o.frequency.setValueAtTime(F * 0.82, t);
-        o.frequency.exponentialRampToValueAtTime(F, t + 0.035);
-        o.frequency.setValueAtTime(F, t + d - 0.04);
-        o.frequency.exponentialRampToValueAtTime(F * 0.94, t + d);
-        o.detune.value = det;
-        const og = a.createGain(); og.gain.value = vol;
-        o.connect(og).connect(g);
-        o.start(t); o.stop(t + d + 0.02);
-      }
-    }
-  } catch (_) { /* pas de son */ }
+// Air horn : le vrai son (sons/air-horn.mp3), décodé une fois puis joué via le volume général.
+let hornBuffer = null, hornCharge = null;
+function chargerHorn() {
+  if (hornCharge) return hornCharge;
+  hornCharge = fetch("sons/air-horn.mp3").then((r) => r.arrayBuffer())
+    .then((b) => new Promise((ok, ko) => ctx().decodeAudioData(b, ok, ko)))
+    .then((buf) => (hornBuffer = buf)).catch(() => { hornCharge = null; });
+  return hornCharge;
 }
-const miniHorn = () => airHorn(0, [[0, 0.24]], 0.8);
+function airHorn(debut = 0, duree = 0, volume = 0.9) {
+  if (!etat.son) return;
+  const jouer = () => {
+    try {
+      const a = ctx();
+      const src = a.createBufferSource(), g = a.createGain();
+      src.buffer = hornBuffer;
+      const t = a.currentTime + debut;
+      g.gain.setValueAtTime(volume, t);
+      if (duree) { g.gain.setValueAtTime(volume, t + duree - 0.05); g.gain.linearRampToValueAtTime(0, t + duree); }
+      src.connect(g).connect(sortie);
+      src.start(t, 0, duree || undefined);
+    } catch (_) { /* pas de son */ }
+  };
+  if (hornBuffer) jouer(); else chargerHorn()?.then(() => hornBuffer && jouer());
+}
+const miniHorn = () => airHorn(0, 0.35, 0.8);
 
 function canonConfettis(intensite) {
   if (reduit()) return;
@@ -881,7 +886,6 @@ function banniere(texte, sous = "", duree = 1100) {
 function celebrer(ratio, record) {
   const intensite = 0.9 + ratio * 1.2 + (record ? 0.5 : 0);
   airHorn();
-  if (ratio >= 0.5 || record) airHorn(1.3);
   canonConfettis(intensite);
   if (ratio >= 0.5 || record) setTimeout(() => canonConfettis(intensite * 0.8), 1300);
   if (!reduit()) {
@@ -984,18 +988,6 @@ function blocSauvegarde(dlg) {
     message);
 }
 
-function ouvrirPistes() {
-  const dlg = $("dlg-pistes");
-  const ids = etat.pistes.filter((id) => !etat.trouves[id]).reverse();
-  vider(dlg,
-    tete("Pistes en attente", ids.length ? `${pluriel(ids.length, "piste")} que tu n'as pas suivies` : null, dlg),
-    h("div", { class: "t-corps" },
-      ids.length
-        ? ids.map((id) => h("button", { class: "piste-ligne", type: "button", onclick: () => { dlg.close(); afficherFait(id); } },
-          imageObjet(salleParId[id].objet), h("div", null, h("b", null, serieDe[id].nom), h("span", null, estPepite(id) ? "★ Pépite" : "Toucher pour la suivre"))))
-        : h("p", { class: "vide-texte" }, "Aucune piste en attente. Chaque fois que tu choisis une piste, l'autre arrive ici.")));
-  if (!dlg.open) dlg.showModal();
-}
 
 function ouvrirFiche(id) {
   const dlg = $("dlg-fiche");
@@ -1006,20 +998,18 @@ function ouvrirFiche(id) {
       h("button", { class: "fiche-objet", type: "button", onclick: () => { dlg.close(); ouvrirObjet(id); }, "aria-label": "Contempler l'objet" }, imageObjet(s.objet, "fiche-img"), h("span", { class: "contempler" }, "Contempler")),
       QUESTIONS[id].map((q) => [
         h("p", { class: "fiche-q" }, q.texte),
-        h("p", { class: "fiche-r" }, `Réponse : ${q.type === "vf" ? (q.reponse ? "vrai" : "faux") : q.choix[q.reponse]}`),
+        h("p", { class: "fiche-r" }, `Réponse : ${q.type === "vf" ? (q.reponse ? "vrai" : "faux") : q.type === "multi" ? q.bonnes.map((i) => q.choix[i]).join(", ") : q.choix[q.reponse]}`),
         h("p", null, q.explication)]),
       s.saviezVous ? h("p", { class: "saviez" }, h("b", null, "Le saviez-vous ?"), s.saviezVous) : null,
-      s.note ? h("p", { class: "note" }, h("b", null, "Note de vérification : "), s.note) : null,
       blocSources(s.sources)));
   dlg.showModal();
 }
 
-for (const d of ["dlg-collection", "dlg-pistes", "dlg-fiche", "dlg-objet"]) {
+for (const d of ["dlg-collection", "dlg-fiche", "dlg-objet"]) {
   $(d).addEventListener("click", (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); });
 }
 $("dlg-objet").addEventListener("close", () => { if (visionneuse) { visionneuse.detruire(); visionneuse = null; } });
 $("btn-collection").addEventListener("click", ouvrirCollection);
-$("btn-pistes").addEventListener("click", ouvrirPistes);
 $("btn-niveau").addEventListener("click", () => {
   const i = niveauDe(etat.xp), suiv = NIVEAUX[i + 1];
   toast(`${etat.xp} points · `, h("b", null, NIVEAUX[i].nom), suiv ? ` · ${suiv.nom} à ${suiv.xp}` : " · niveau maximum");
@@ -1027,14 +1017,6 @@ $("btn-niveau").addEventListener("click", () => {
 
 /* ---------- Réglages : son et typo ---------- */
 
-const TYPOS = ["fraunces", "instrument", "unbounded"];
-function appliquerTypo() { document.documentElement.dataset.typo = etat.typo; }
-$("btn-typo").addEventListener("click", () => {
-  etat.typo = TYPOS[(TYPOS.indexOf(etat.typo) + 1) % TYPOS.length];
-  appliquerTypo();
-  sauver();
-  toast("Typo : ", h("b", null, { unbounded: "Unbounded", fraunces: "Fraunces", instrument: "Instrument Serif" }[etat.typo]));
-});
 function appliquerSon() {
   const b = $("btn-son");
   b.setAttribute("aria-pressed", String(etat.son));
@@ -1060,7 +1042,6 @@ addEventListener("keydown", (e) => {
 
 /* ---------- Départ ---------- */
 
-appliquerTypo();
 appliquerSon();
 majHud();
 if (nuage.actif && etat.code) {
