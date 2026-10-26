@@ -22,8 +22,8 @@ export const QUESTIONS = {
     {
       type: "placer", texte: "Nintendo a été fondée à Kyoto. Place sa création sur la frise.", sujet: "Nintendo",
       min: 1666, max: 2007, gauche: "Grand Incendie de Londres", gaucheDate: "1666", droite: "Premier iPhone", droiteDate: "2007",
-      val: 1889, valTexte: "1889", tol: 25,
-      explication: "En 1889. Nintendo indique avoir été fondée en septembre 1889, à Kyoto. Il fallait tomber à 25 ans près.",
+      val: 1889, valTexte: "1889", tol: 40,
+      explication: "En 1889. Nintendo indique avoir été fondée en septembre 1889, à Kyoto.",
     },
     {
       type: "qcm", texte: "Et que fabriquait Nintendo à ses débuts ?",
@@ -190,12 +190,12 @@ export const QUESTIONS = {
   }],
   baseball: [{
     type: "estimer", texte: "Combien de matchs chaque équipe de la MLB joue-t-elle pendant la saison régulière ?",
-    min: 50, max: 250, val: 162, tol: 15, unite: "matchs",
+    min: 50, max: 250, val: 162, tol: 25, unite: "matchs",
     explication: "162, à peu près un par jour pendant six mois. 82, c'est le nombre de matchs d'une saison régulière en NBA ou en NHL.",
   }],
   around: [{
     type: "estimer", texte: "Combien de fois la phrase « Around the world » est-elle répétée dans le morceau de Daft Punk ?",
-    min: 0, max: 300, val: 144, tol: 20, unite: "fois",
+    min: 0, max: 300, val: 144, tol: 35, unite: "fois",
     explication: "144 fois, selon le décompte le plus souvent cité pour la version de l'album Homework (1997). Ce sont les seules paroles du morceau.",
   }],
   bestof: [{

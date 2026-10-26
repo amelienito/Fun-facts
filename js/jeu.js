@@ -406,6 +406,8 @@ function poserMulti(s, qi, z, q, total) {
   if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
 }
 
+// Sur les frises et les curseurs : dans la tolérance, c'est juste ; jusqu'au double, c'est « presque » (moitié des points, le combo continue).
+const juger = (ecart, tol) => (ecart <= tol ? true : ecart <= tol * 2 ? "presque" : false);
 const entete = (z, q, qi, total) => [z.zoneObjet,
   total > 1 ? h("p", { class: "q-num" }, `Question ${qi + 1} sur ${total}`) : null,
   h("h1", { class: `question ${q.texte.length > 72 ? "longue" : ""}`, tabindex: "-1" }, q.texte)];
@@ -437,7 +439,7 @@ function poserPlacer(s, qi, z, q, total) {
     vrai.style.left = `${((q.val - q.min) / (q.max - q.min)) * 100}%`; vrai.classList.add("visible");
     lecture.textContent = `Tu as placé : ${anneeTxt(v)}. Réponse : ${q.valTexte}.`;
     valider.remove();
-    repondre(s, qi, z, zone, piste, Math.abs(v - q.val) <= q.tol);
+    repondre(s, qi, z, zone, piste, juger(Math.abs(v - q.val), q.tol));
   });
   vider(zone, h("div", { class: "lb-frise" }, piste,
     h("div", { class: "frise-bouts" },
@@ -464,8 +466,8 @@ function poserEstimer(s, qi, z, q, total) {
     curseur.disabled = true; valider.remove(); vrai.classList.add("visible");
     zone.querySelectorAll(".pas").forEach((b) => (b.disabled = true));
     const ecart = Math.abs(Number(curseur.value) - q.val);
-    lecture.textContent = ecart === 0 ? "Pile poil !" : `Écart : ${ecart.toLocaleString("fr-FR")} (il fallait tomber à ${q.tol} près).`;
-    repondre(s, qi, z, zone, curseur, ecart <= q.tol);
+    lecture.textContent = ecart === 0 ? "Pile poil !" : `Écart : ${ecart.toLocaleString("fr-FR")}.`;
+    repondre(s, qi, z, zone, curseur, juger(ecart, q.tol));
   });
   const lecture = h("p", { class: "lb-lecture" });
   vider(zone,
@@ -482,7 +484,8 @@ function repondre(s, qi, z, reps, bouton, val) {
   if (z.frise) setTimeout(() => z.frise.classList.add("revelee"), 250);
   const q = QUESTIONS[s.id][qi];
   const special = ["multi", "placer", "estimer"].includes(q.type);
-  const juste = special ? val : val === q.reponse;
+  const presque = val === "presque";
+  const juste = special ? val === true || presque : val === q.reponse;
   if (!special) for (const x of reps.querySelectorAll(".rep")) {
     const v = x.dataset.v === "true" ? true : x.dataset.v === "false" ? false : Number(x.dataset.v);
     x.classList.add(v === q.reponse ? "bon" : "barre");
@@ -492,7 +495,7 @@ function repondre(s, qi, z, reps, bouton, val) {
   const r = bouton.getBoundingClientRect();
   let gain;
   if (juste) {
-    gain = 500 * multiplicateur() * (estPepite(s.id) ? 2 : 1);
+    gain = 500 * multiplicateur() * (estPepite(s.id) ? 2 : 1) * (presque ? 0.5 : 1);
     combo++;
     etat.record = Math.max(etat.record, combo);
     SONS.juste(combo);
@@ -525,7 +528,7 @@ function repondre(s, qi, z, reps, bouton, val) {
       nuage.compterReponse(cleQ, juste);
     });
   }
-  const titre = juste ? "Bien vu." : "Raté.";
+  const titre = presque ? "Presque !" : juste ? "Bien vu." : "Raté.";
   const lignes = [
     h("p", { class: "verdict" }, h("b", null, titre), statJoueurs, h("span", { class: "gain" }, juste ? `+${gain.toLocaleString("fr-FR")} points${multiplicateur() > 1 && combo > 1 ? ` · combo de ${combo}` : ""}` : `+${gain} points pour avoir appris quelque chose`)),
     h("p", null, q.explication),
@@ -710,8 +713,8 @@ function afficherPlusOuMoins(ensuite, exclu) {
     vider(scene, h("p", { class: "consigne" }, `Manche ${k + 1} sur ${MANCHES}`), carteN(a), h("p", { class: "pom-vs" }, "contre"), droite, choix);
   };
   const terminer = () => {
-    const pts = bons * 500 + (bons === MANCHES ? 2500 : 0);
-    if (bons) gagner(pts, innerWidth / 2, scene.getBoundingClientRect().top + 60);
+    const pts = Math.max(100, bons * 500 + (bons === MANCHES ? 2500 : 0));
+    gagner(pts, innerWidth / 2, scene.getBoundingClientRect().top + 60);
     if (partie) { partie.score += pts; partie.questions++; if (bons >= MANCHES / 2) partie.bonnes++; }
     if (bons === MANCHES) { combo++; confettis(innerWidth / 2, innerHeight / 2, ["#FFC93C", "#FBF5E9", "#15131A"]); }
     vider(fin, h("p", { class: "verdict" }, h("b", null, bons === MANCHES ? "Sans faute." : `${bons} sur ${MANCHES}.`), h("span", { class: "gain" }, `+${pts.toLocaleString("fr-FR")} points`)),
@@ -768,7 +771,7 @@ function afficherPaires(ensuite, exclu) {
 }
 
 function afficherEclair(ensuite, exclu) {
-  const DUREE = 25;
+  const DUREE = 32;
   const tirees = melanger(affirmationsPossibles(exclu)).slice(0, 8);
   // Vrai et faux bien alternés au hasard : jamais trois fois de suite la même réponse.
   let items = [];
@@ -791,13 +794,14 @@ function afficherEclair(ensuite, exclu) {
     fini = true;
     cancelAnimationFrame(raf);
     boutons.remove();
-    const pts = bons * 250 + (bons === items.length ? 1000 : 0);
-    if (bons) { SONS.juste(bons); gagner(pts, innerWidth / 2, carte.getBoundingClientRect().top); } else SONS.faux();
+    const pts = Math.max(100, bons * 250 + (bons === items.length ? 1000 : 0));
+    if (bons) SONS.juste(bons); else SONS.faux();
+    gagner(pts, innerWidth / 2, carte.getBoundingClientRect().top);
     if (partie) { partie.score += pts; partie.questions++; if (bons >= items.length / 2) partie.bonnes++; }
     vider(carte, h("span", { class: "a-p" }, bons === items.length ? "Sans faute." : `${bons} sur ${items.length}.`));
     carte.after(h("ol", { class: "recap" }, items.slice(0, reponses.length).map((a, k) => h("li", { class: reponses[k] ? "ok" : "ko" },
       h("span", { class: "a-q" }, a.question), h("span", null, a.vraie ? `Vrai : ${a.prop}` : `Faux : pas ${a.prop}, mais ${a.bonne}`)))));
-    vider(fin, h("p", { class: "verdict" }, h("b", null, pts ? `+${pts} points` : "Raté."), h("span", { class: "gain" }, `${pluriel(bons, "bonne réponse", "bonnes réponses")} en ${DUREE} secondes max`)),
+    vider(fin, h("p", { class: "verdict" }, h("b", null, bons ? `+${pts.toLocaleString("fr-FR")} points` : `+${pts} points`), h("span", { class: "gain" }, `${pluriel(bons, "bonne réponse", "bonnes réponses")} en ${DUREE} secondes max`)),
       h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
   };
   const choisir = (v) => {
