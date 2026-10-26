@@ -191,7 +191,7 @@ export const QUESTIONS = {
   eswc: [{
     type: "qcm", texte: "En quelle année la Coupe du monde des jeux vidéo (ESWC) a-t-elle organisé son premier tournoi de Counter-Strike 100 % féminin ?", ordre: true,
     choix: ["2003", "2009", "2015", "2021"], reponse: 0,
-    explication: "En 2003, dès la toute première édition de l'ESWC : huit équipes invitées, du 8 au 13 juillet.",
+    explication: "En 2003, dès la toute première édition de l'ESWC : huit équipes invitées.",
   }, {
     type: "qcm", texte: "Et où se jouait-il ?",
     choix: ["Au Futuroscope, près de Poitiers", "À Séoul", "À Las Vegas", "Au Carrousel du Louvre, à Paris"], reponse: 0,
