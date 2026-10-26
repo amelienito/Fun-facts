@@ -50,7 +50,7 @@ export const QUESTIONS = {
   }],
   hiboux: [{
     type: "qcm", texte: "Sous leurs plumes, comment sont les pattes des hiboux ?",
-    choix: ["Très longues", "Très courtes", "Palmées", "Couvertes d'écailles jusqu'au genou"], reponse: 0,
+    choix: ["Très longues", "Très courtes", "Palmées", "Atrophiées"], reponse: 0,
     explication: "Très longues. On ne voit d'habitude que le bas de la patte et les serres : la cuisse et le genou sont cachés dans le plumage. Ces longues pattes servent à chasser en gardant la tête à distance de la proie.",
   }],
   pizzly: [{
@@ -90,8 +90,8 @@ export const QUESTIONS = {
   }],
   melos: [{
     type: "qcm", texte: "En 416 av. J.-C., pourquoi Athènes a-t-elle rasé l'île de Mélos ?",
-    choix: ["Elle refusait de se soumettre et voulait rester neutre", "Elle avait attaqué la flotte athénienne", "Elle refusait de rembourser une dette", "Elle cachait un traître recherché par Athènes"], reponse: 0,
-    explication: "Mélos refusait de se soumettre : ses habitants plaidaient la neutralité et en appelaient à la justice. Athènes a assiégé l'île, tué les hommes et réduit les femmes et les enfants en esclavage.",
+    choix: ["Elle voulait rester neutre", "Elle avait coulé un navire athénien", "Elle cachait un traître", "Une épidémie en était partie"], reponse: 0,
+    explication: "Elle voulait rester neutre et refusait de se soumettre : ses habitants plaidaient la neutralité et en appelaient à la justice. Athènes a assiégé l'île, tué les hommes et réduit les femmes et les enfants en esclavage.",
   }],
   fifa: [{
     type: "qcm", texte: "Dans quelle ville la FIFA a-t-elle été fondée, en 1904 ?",
@@ -125,17 +125,17 @@ export const QUESTIONS = {
   }],
   beksinski: [{
     type: "qcm", texte: "Quel titre le peintre polonais Zdzisław Beksiński donnait-il à ses tableaux ?",
-    choix: ["Aucun", "Le nom de la personne qui l'achetait", "Un mot qu'il inventait", "Un vers de poème"], reponse: 0,
+    choix: ["Aucun", "Un prénom", "Un mot inventé", "Un lieu"], reponse: 0,
     explication: "Aucun : il ne nommait ni ses dessins ni ses tableaux, car ses œuvres n'avaient pas à être expliquées. Il disait ne pas savoir lui-même ce qu'elles signifiaient.",
   }],
   quebec: [{
     type: "qcm", texte: "Sous quel titre la comédie Le Plus Escroc des deux (1988) est-elle sortie au Québec ?",
-    choix: ["Deux fils de pute", "Les Deux Arnaqueurs", "Sales Escrocs", "Deux crapules sur la Riviera"], reponse: 0,
+    choix: ["Deux fils de pute", "Deux beaux salauds", "Sales Escrocs", "Les Deux Arnaqueurs"], reponse: 0,
     explication: "« Deux fils de pute ». Le film de Frank Oz, avec Steve Martin et Michael Caine, s'appelle Dirty Rotten Scoundrels en version originale.",
   }],
   katerine: [{
     type: "qcm", texte: "Dans le film d'animation Jim Queen, quel rôle tient Philippe Katerine ?",
-    choix: ["Une prostate", "Un chat de gouttière", "Le maire de Paris", "Un DJ"], reponse: 0,
+    choix: ["Une prostate", "Un appendice", "Un rein", "Une vessie"], reponse: 0,
     explication: "Une prostate. Selon le coréalisateur Marco Nguyen, l'idée venait du producteur, et Katerine a accepté justement parce qu'il s'agissait d'une prostate.",
   }],
   zidane: [{
@@ -165,13 +165,13 @@ export const QUESTIONS = {
   }],
   forhonor: [{
     type: "qcm", texte: "D'où vient l'idée du jeu de combat For Honor ?",
-    choix: ["D'un cours d'épée longue allemande", "D'un film de chevaliers", "D'une partie de Donjons et Dragons", "D'un voyage au Japon"], reponse: 0,
+    choix: ["D'un cours d'épée longue allemande", "D'un documentaire sur les samouraïs", "D'une reconstitution médiévale au Québec", "D'un tournoi de kendo à Tokyo"], reponse: 0,
     explication: "D'un cours d'épée longue allemande : son directeur créatif, Jason VandenBerghe, voulait reproduire ces gardes avec le stick droit de la manette.",
   }],
   ecureuil: [{
     type: "qcm", texte: "Squirrel with a Gun (« écureuil avec un flingue »), c'est…",
-    choix: ["Un vrai jeu vidéo, sorti en 2024", "Un faux jeu inventé pour un mème", "Un court-métrage de Pixar", "Le surnom d'un joueur de baseball"], reponse: 0,
-    explication: "Un vrai jeu vidéo : développé par Dee Dee Creations et édité par Maximum Entertainment, il est sorti sur PC le 29 août 2024. On y incarne, comme promis, un écureuil armé.",
+    choix: ["Un vrai jeu vidéo", "Un faux jeu inventé pour un mème", "Un court-métrage Pixar", "Une bande dessinée de Gotlib"], reponse: 0,
+    explication: "Un vrai jeu vidéo, sorti en 2024 : développé par Dee Dee Creations et édité par Maximum Entertainment, il est sorti sur PC le 29 août 2024. On y incarne, comme promis, un écureuil armé.",
   }],
   justin: [{
     type: "qcm", texte: "De quel site est né Twitch ?",
@@ -225,7 +225,7 @@ export const QUESTIONS = {
   }],
   poioumenon: [{
     type: "qcm", texte: "Un « poioumenon », c'est…",
-    choix: ["Une œuvre qui raconte sa propre création", "Un poème sans rimes", "Un personnage secondaire", "Une faute de traduction"], reponse: 0,
+    choix: ["Une œuvre qui raconte sa propre création", "Un poème qui ne rime jamais", "Un personnage qui n'apparaît qu'une fois", "Une erreur de traduction célèbre"], reponse: 0,
     explication: "Une œuvre de métafiction qui raconte le processus de sa création, parfois l'écriture de l'œuvre elle-même. Le terme a été proposé par le critique Alastair Fowler.",
   }],
   manicule: [{

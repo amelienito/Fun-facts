@@ -254,3 +254,91 @@ export function miniature(id) {
     return null;
   }
 }
+
+// Visionneuse plein écran : tourner l'objet au doigt ou à la souris, zoomer, et il tourne seul au repos.
+export class Visionneuse {
+  constructor(conteneur, id) {
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    this.canvas = this.renderer.domElement;
+    this.canvas.style.cssText = "width:100%;height:100%;display:block;touch-action:none;cursor:grab";
+    conteneur.append(this.canvas);
+    this.scene = new THREE.Scene();
+    eclairer(this.scene);
+    this.camera = new THREE.PerspectiveCamera(30, 1, 0.05, 80);
+    this.pivot = new THREE.Group();
+    this.scene.add(this.pivot);
+    const obj = construire(id);
+    const boite = new THREE.Box3().setFromObject(obj);
+    const c = boite.getCenter(new THREE.Vector3());
+    obj.position.sub(c);
+    this.pivot.add(obj);
+    this.obj = obj;
+    const t = boite.getSize(new THREE.Vector3());
+    this.rayon = Math.max(t.x, t.y, t.z) * 0.62;
+    this.zoom = 1;
+    this.ry = -0.5; this.rx = 0.18; this.vy = 0.5;
+    this.pointeurs = new Map();
+    this.dernier = performance.now();
+    this.repos = 0;
+    const cv = this.canvas;
+    cv.addEventListener("pointerdown", (e) => { cv.setPointerCapture(e.pointerId); this.pointeurs.set(e.pointerId, { x: e.clientX, y: e.clientY }); cv.style.cursor = "grabbing"; });
+    cv.addEventListener("pointermove", (e) => {
+      const p = this.pointeurs.get(e.pointerId);
+      if (!p) return;
+      if (this.pointeurs.size === 1) {
+        const dx = e.clientX - p.x, dy = e.clientY - p.y;
+        this.ry += dx * 0.01; this.rx = Math.max(-1.1, Math.min(1.1, this.rx + dy * 0.008));
+        this.vy = dx * 0.6;
+      } else if (this.pointeurs.size === 2) {
+        const autres = [...this.pointeurs.entries()].find(([k]) => k !== e.pointerId)[1];
+        const avant = Math.hypot(p.x - autres.x, p.y - autres.y), apres = Math.hypot(e.clientX - autres.x, e.clientY - autres.y);
+        if (avant > 0) this.zoom = Math.max(0.6, Math.min(3, this.zoom * (apres / avant)));
+      }
+      p.x = e.clientX; p.y = e.clientY;
+      this.repos = 0;
+    });
+    const fin = (e) => { this.pointeurs.delete(e.pointerId); if (!this.pointeurs.size) cv.style.cursor = "grab"; };
+    cv.addEventListener("pointerup", fin);
+    cv.addEventListener("pointercancel", fin);
+    cv.addEventListener("wheel", (e) => { e.preventDefault(); this.zoom = Math.max(0.6, Math.min(3, this.zoom * Math.exp(-e.deltaY * 0.0015))); }, { passive: false });
+    this.ro = new ResizeObserver(() => this._taille());
+    this.ro.observe(conteneur);
+    this._taille();
+    this.vivant = true;
+    this._boucle = this._boucle.bind(this);
+    requestAnimationFrame(this._boucle);
+  }
+  _taille() {
+    const p = this.canvas.parentElement;
+    if (!p || !p.clientWidth) return;
+    this.renderer.setSize(p.clientWidth, p.clientHeight, false);
+    this.camera.aspect = p.clientWidth / p.clientHeight;
+    this.camera.updateProjectionMatrix();
+  }
+  _boucle(t) {
+    if (!this.vivant) return;
+    requestAnimationFrame(this._boucle);
+    const dt = Math.min(0.05, (t - this.dernier) / 1000);
+    this.dernier = t;
+    this.repos += dt;
+    if (!this.pointeurs.size) {
+      this.vy += ((this.repos > 1.5 ? 0.45 : 0) - this.vy) * Math.min(1, dt * 2.5);
+      this.ry += this.vy * dt;
+    }
+    this.pivot.rotation.set(this.rx, this.ry, 0);
+    const ajust = Math.min(1, this.camera.aspect);
+    const d = (this.rayon / Math.tan(THREE.MathUtils.degToRad(15))) / ajust / this.zoom;
+    this.camera.position.set(0, 0, d);
+    this.camera.lookAt(0, 0, 0);
+    this.renderer.render(this.scene, this.camera);
+  }
+  detruire() {
+    this.vivant = false;
+    this.ro.disconnect();
+    liberer(this.obj);
+    this.renderer.dispose();
+    this.renderer.forceContextLoss();
+    this.canvas.remove();
+  }
+}

@@ -300,3 +300,80 @@ button.case:hover { transform: translateY(-2px); }
   .objet { animation: none; }
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* ---------- V5 : parties, intermèdes, célébration, visionneuse ---------- */
+.puce.partie { background: var(--creme); color: var(--nuit); }
+.puce.partie[hidden] { display: none; }
+button.objet-zone { padding: 0; cursor: default; }
+.revele button.objet-zone { cursor: zoom-in; }
+.revele button.objet-zone::after {
+  content: "Contempler"; position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%);
+  padding: 3px 10px; border-radius: 999px; font-family: var(--corps); font-weight: 700; font-size: 0.8rem;
+  background: var(--nuit); color: var(--creme); opacity: 0; transition: opacity 0.2s;
+}
+.revele button.objet-zone:hover::after, .revele button.objet-zone:focus-visible::after { opacity: 1; }
+button.acquis { text-align: left; cursor: zoom-in; }
+.acquis .contempler, .fiche-objet .contempler { margin-left: 6px; padding: 4px 10px; border-radius: 999px; background: var(--or); color: var(--nuit); font-weight: 800; font-size: 0.8rem; }
+.fiche-objet { display: flex; align-items: center; gap: 4px; padding: 0; cursor: zoom-in; }
+.consigne { max-width: 34rem; margin: 14px 0 0; font-size: 1.1rem; }
+
+.affirmations { display: grid; gap: 12px; margin-top: 26px; max-width: 40rem; }
+.affirmation {
+  display: grid; gap: 4px; text-align: left; padding: 16px 18px 18px; border-radius: 20px;
+  background: var(--texte); color: var(--fond); transition: transform 0.2s cubic-bezier(0.3, 1.7, 0.5, 1), opacity 0.3s;
+}
+.affirmation:hover:not([disabled]) { transform: translateY(-3px) rotate(-0.6deg); }
+.a-q { font-size: 0.95rem; opacity: 0.8; }
+.a-p { font-family: var(--titre); font-weight: var(--titre-graisse); font-variation-settings: var(--titre-variation); font-size: clamp(1.3rem, 5vw, 1.9rem); line-height: 1.1; letter-spacing: var(--titre-approche); }
+.a-corr { font-weight: 800; font-size: 0.95rem; margin-top: 4px; }
+.affirmations.fini .affirmation { cursor: default; }
+.affirmations.fini .vraie { opacity: 0.4; }
+.affirmations.fini .fausse { outline: 4px solid var(--texte); outline-offset: 4px; transform: rotate(-1deg) scale(1.02); }
+
+.chrono { height: 12px; border-radius: 6px; margin: 24px 0 18px; max-width: 40rem; background: color-mix(in srgb, var(--texte) 20%, transparent); overflow: hidden; }
+.chrono i { display: block; height: 100%; width: 100%; background: var(--texte); border-radius: 6px; }
+.eclair-carte { display: grid; gap: 6px; min-height: 120px; max-width: 40rem; padding: 18px 20px; border-radius: 22px; background: var(--texte); color: var(--fond); }
+.eclair-carte:empty { display: none; }
+.eclair-carte.flash-ok { animation: flashok 0.3s; }
+@keyframes flashok { 50% { transform: scale(1.03); } }
+.eclair-boutons { display: flex; gap: 12px; margin-top: 16px; }
+.eclair-boutons .gros-bouton { flex: 1; max-width: 200px; justify-content: center; font-size: 1.4rem; padding: 18px 20px; }
+.intermede > .gros-bouton { margin-top: 18px; }
+
+.fin-partie .titre-fin { font-size: calc(var(--titre-taille) * 1.35); }
+.score-ligne { display: flex; align-items: baseline; gap: 12px; margin: 10px 0 0; }
+.score-geant { font-family: var(--titre); font-weight: var(--titre-graisse); font-variation-settings: var(--titre-variation); font-size: clamp(4rem, 20vw, 9rem); line-height: 0.9; font-variant-numeric: tabular-nums; letter-spacing: -0.03em; }
+.score-ligne > span:last-child { font-weight: 800; font-size: 1.3rem; }
+.stats { list-style: none; padding: 0; margin: 22px 0 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; max-width: 44rem; }
+.stats li { padding: 12px 14px; border-radius: 18px; border: 2.5px solid currentColor; font-weight: 600; font-size: 0.95rem; line-height: 1.2; }
+.stats b { display: block; font-family: var(--titre); font-weight: var(--titre-graisse); font-variation-settings: var(--titre-variation); font-size: 1.9rem; line-height: 1.05; }
+.gagnes { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+.gagne { width: 84px; height: 84px; border-radius: 18px; padding: 4px; background: rgba(255, 255, 255, 0.22); cursor: zoom-in; transition: transform 0.2s cubic-bezier(0.3, 1.7, 0.5, 1); }
+.gagne:hover { transform: translateY(-4px) rotate(-3deg); }
+.gagne img { width: 100%; height: 100%; object-fit: contain; }
+.series-avance { margin: 16px 0 0; max-width: 40rem; }
+.sous-titre { margin: 44px 0 0; font-family: var(--titre); font-weight: var(--titre-graisse); font-variation-settings: var(--titre-variation); font-size: clamp(1.6rem, 6vw, 2.4rem); letter-spacing: var(--titre-approche); }
+.durees { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin: 18px 0 20px; max-width: 44rem; }
+.duree { display: grid; justify-items: start; gap: 2px; padding: 12px 16px 14px; border-radius: 18px; border: 2.5px solid currentColor; text-align: left; transition: transform 0.15s; }
+.duree b { font-family: var(--titre); font-weight: var(--titre-graisse); font-variation-settings: var(--titre-variation); font-size: 2rem; line-height: 1; }
+.duree span { font-weight: 600; font-size: 0.9rem; opacity: 0.8; }
+.duree[aria-checked="true"] { background: var(--texte); color: var(--fond); transform: scale(1.03); }
+.case-cocher { display: flex; align-items: center; gap: 10px; margin-top: 18px; font-weight: 600; font-size: 0.95rem; cursor: pointer; }
+.case-cocher input { width: 20px; height: 20px; accent-color: currentColor; }
+.jouer { font-size: 1.4rem; padding: 18px 34px; }
+
+.canon { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 45; pointer-events: none; }
+.flash { position: fixed; inset: 0; z-index: 44; pointer-events: none; background: #fff; animation: flash 0.6s ease-out forwards; }
+@keyframes flash { from { opacity: 0.75; } to { opacity: 0; } }
+.seisme .fil { animation: seisme 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+@keyframes seisme {
+  10%, 90% { transform: translate(-2px, 1px); } 20%, 80% { transform: translate(4px, -2px); }
+  30%, 50%, 70% { transform: translate(-7px, 3px) rotate(-0.4deg); } 40%, 60% { transform: translate(7px, -3px) rotate(0.4deg); }
+}
+
+dialog.objet-dlg { background: radial-gradient(ellipse at 50% 40%, #fff6e0, #f1e3c4 55%, #d9c49b); }
+.objet-dlg .t-tete { background: transparent; }
+.scene-objet { height: min(68dvh, 620px); margin: 0 8px; }
+@media (min-width: 820px) { dialog.objet-dlg { width: min(860px, calc(100% - 48px)); } }
+.bande { scroll-margin-top: 50px; }
+.intermede .verdict { margin-top: 28px; }

@@ -1,4 +1,4 @@
-import { SALLES, FRISE, VERIFIE_LE } from "./data.js";
+import { SALLES, VERIFIE_LE } from "./data.js";
 import { QUESTIONS, SERIES, PEPITES, NIVEAUX } from "./questions.js";
 
 /* ---------- Outils ---------- */
@@ -56,7 +56,9 @@ const etat = (() => {
     son: e.son !== false,
     typo: e.typo || "fraunces",
     pepiteGarantie: !!e.pepiteGarantie,
-    depuisArchives: e.depuisArchives || 0,
+    longueur: e.longueur || 10,
+    proposerDuree: !!e.proposerDuree,
+    meilleurs: e.meilleurs || {},
   };
 })();
 const sauver = () => {
@@ -146,6 +148,8 @@ function majHud(anime) {
   const np = etat.pistes.filter((id) => !etat.trouves[id]).length;
   $("nb-pistes").textContent = np;
   $("btn-pistes").setAttribute("aria-label", `${pluriel(np, "piste")} en attente`);
+  if (partie) $("progression-partie").textContent = `${Math.min(partie.n, partie.total)}/${partie.total}`;
+  $("progression-partie").hidden = !partie;
   const m = multiplicateur();
   const s = $("serie");
   s.hidden = m < 2;
@@ -221,23 +225,33 @@ function allerA(b) {
 
 /* ---------- Un fait ---------- */
 
+// Faits jouables : d'abord ceux pas encore trouvés, puis (pour rejouer) ceux déjà trouvés.
+const dejaJoue = (id) => partie && partie.joues.has(id);
+function candidats(sauf) {
+  const neufs = SALLES.filter((x) => x.id !== sauf && !etat.trouves[x.id] && !dejaJoue(x.id));
+  const revus = melanger(SALLES.filter((x) => x.id !== sauf && etat.trouves[x.id] && !dejaJoue(x.id)));
+  return { neufs, revus };
+}
 function choisirDepart() {
-  const pistes = etat.pistes.filter((id) => !etat.trouves[id] && salleParId[id]);
+  const pistes = etat.pistes.filter((id) => !etat.trouves[id] && salleParId[id] && !dejaJoue(id));
   if (pistes.length) return pistes[pistes.length - 1];
-  const restants = SALLES.filter((s) => !etat.trouves[s.id]);
-  if (!restants.length) return null;
-  const sansPepite = restants.filter((s) => !estPepite(s.id));
-  return melanger(sansPepite.length ? sansPepite : restants)[0].id;
+  const { neufs, revus } = candidats();
+  if (neufs.length) {
+    const sansPepite = neufs.filter((x) => !estPepite(x.id));
+    return melanger(sansPepite.length ? sansPepite : neufs)[0].id;
+  }
+  return revus.length ? revus[0].id : null;
 }
 
 function afficherFait(id, premier) {
   const s = salleParId[id];
   etat.pistes = etat.pistes.filter((x) => x !== id);
   sauver();
+  if (partie) { partie.n++; partie.joues.add(id); }
   majHud();
   const b = nouvelleBande();
   const serie = serieDe[id];
-  const zoneObjet = h("div", { class: "objet-zone" }, imageObjet(s.objet, "objet"));
+  const zoneObjet = h("button", { class: "objet-zone", type: "button", tabindex: "-1", "aria-label": "Contempler l'objet", onclick: () => { if (b.classList.contains("revele")) ouvrirObjet(id); } }, imageObjet(s.objet, "objet"));
   const tete = h("div", { class: "tete" });
   const suite = h("div", { class: "suite", hidden: true });
   vider(b,
@@ -298,6 +312,12 @@ function repondre(s, qi, z, reps, bouton, val) {
     reps.classList.add("secoue");
   }
   gagner(gain, r.left + r.width / 2, r.top);
+  if (partie) {
+    partie.score += gain;
+    partie.questions++;
+    if (juste) partie.bonnes++;
+    partie.comboMax = Math.max(partie.comboMax, combo);
+  }
 
   const lignes = [
     h("p", { class: "verdict" }, h("b", null, juste ? "Bien vu." : "Raté."), h("span", { class: "gain" }, juste ? `+${gain} points${multiplicateur() > 1 && combo > 1 ? ` · combo de ${combo}` : ""}` : `+${gain} points pour avoir appris quelque chose`)),
@@ -313,7 +333,7 @@ function repondre(s, qi, z, reps, bouton, val) {
   z.b.classList.add("revele");
   const nouveau = !etat.trouves[s.id];
   if (nouveau) etat.trouves[s.id] = { date: aujourdhui(), juste };
-  etat.depuisArchives++;
+  if (nouveau && partie) partie.gagnes.push(s.id);
   sauver();
   majHud(nouveau ? ["btn-collection"] : null);
 
@@ -323,11 +343,14 @@ function repondre(s, qi, z, reps, bouton, val) {
   if (s.note) lignes.push(h("p", { class: "note" }, h("b", null, "Note de vérification : "), s.note));
   lignes.push(blocSources(s.sources));
   const jauge = h("i", { style: "width:0%" });
-  lignes.push(h("div", { class: "acquis" },
+  lignes.push(h("button", { class: "acquis", type: "button", onclick: () => ouvrirObjet(s.id), "aria-label": `Contempler : ${s.nom}` },
     imageObjet(s.objet),
-    h("div", null, nouveau ? "Ajouté à ta collection" : "Déjà dans ta collection", h("br"), h("b", null, `${serie.nom} : ${nSerie}/${serie.ids.length}`), h("span", { class: "jauge" }, jauge))));
+    h("div", null, nouveau ? "Ajouté à ta collection" : "Déjà dans ta collection", h("br"), h("b", null, `${serie.nom} : ${nSerie}/${serie.ids.length}`), h("span", { class: "jauge" }, jauge)),
+    h("span", { class: "contempler" }, "Contempler")));
   requestAnimationFrame(() => requestAnimationFrame(() => (jauge.style.width = `${(nSerie / serie.ids.length) * 100}%`)));
-  lignes.push(blocPortes(s, z.b));
+  if (partie && partie.n >= partie.total) {
+    lignes.push(h("div", { class: "pistes-zone" }, h("button", { class: "gros-bouton", type: "button", onclick: (e) => { e.currentTarget.disabled = true; finPartie(); } }, "Voir le résultat")));
+  } else lignes.push(blocPortes(s, z.b));
   vider(z.suite, lignes);
   z.suite.hidden = false;
 
@@ -335,6 +358,7 @@ function repondre(s, qi, z, reps, bouton, val) {
     setTimeout(() => {
       SONS.serie();
       gagner(50);
+      if (partie) partie.score += 50;
       annoncer("Série complète", serie.nom, `Tu as trouvé les ${serie.ids.length} faits de la série. +50 points.`);
     }, 900);
   } else if (nouveau && serie.ids.length - nSerie === 1) {
@@ -354,7 +378,8 @@ function blocSources(sources) {
 /* ---------- Les pistes (terrier de lapin) ---------- */
 
 function choisirPortes(s) {
-  const libres = SALLES.filter((x) => x.id !== s.id && !etat.trouves[x.id]);
+  const { neufs, revus } = candidats(s.id);
+  const libres = neufs.length >= 2 ? neufs : [...neufs, ...revus];
   const res = [];
   for (const l of s.liens || []) {
     const c = libres.find((x) => x.id === l.vers);
@@ -393,7 +418,7 @@ function blocPortes(s, bande) {
     const b = h("button", { class: `porte ${pep ? "pepite" : ""}`, type: "button", "aria-label": `Suivre la piste ${serieDe[c.id].nom}${pep ? ", pépite" : ""}` },
       imageObjet(c.objet),
       h("span", { class: "p-serie" }, serieDe[c.id].nom),
-      h("span", { class: "p-type" }, pep ? "Pépite" : etat.pistes.includes(c.id) ? "Piste en attente" : "Nouvelle piste"));
+      h("span", { class: "p-type" }, etat.trouves[c.id] ? "À revoir" : pep ? "Pépite" : etat.pistes.includes(c.id) ? "Piste en attente" : "Nouvelle piste"));
     b.addEventListener("click", () => {
       if (b.disabled) return;
       SONS.porte();
@@ -417,75 +442,290 @@ function blocPortes(s, bande) {
 }
 
 function suivant(id) {
-  if (etat.depuisArchives >= 5 && archivesPossibles().length >= 4) afficherArchives(() => afficherFait(id));
-  else afficherFait(id);
+  // Un intermède toutes les 4 questions, si on a déjà assez de faits trouvés pour le nourrir.
+  if (partie && partie.n > 0 && partie.n % 4 === 0 && partie.n < partie.total && new Set(affirmationsPossibles().map((a) => a.id)).size >= 4) {
+    const jeu = partie.intermedes++ % 2 === 0 ? afficherMenteur : afficherEclair;
+    jeu(() => afficherFait(id));
+  } else afficherFait(id);
 }
 
-/* ---------- Salle des archives : remettre dans l'ordre ---------- */
+/* ---------- Intermèdes : Le menteur et Éclair ---------- */
 
-// Un seul moment par année, pour que l'ordre ne soit jamais ambigu.
-const archivesPossibles = () => {
-  const vus = new Set();
-  return melanger(FRISE.filter((m) => etat.trouves[m.salle])).filter((m) => {
-    const an = Math.floor(m.date);
-    if (vus.has(an)) return false;
-    vus.add(an);
-    return true;
-  });
-};
+// Une affirmation = une question déjà trouvée + une réponse proposée (la bonne ou une fausse).
+const affirmationsPossibles = () => Object.keys(etat.trouves).filter((id) => salleParId[id]).flatMap((id) => QUESTIONS[id].filter((q) => q.type === "qcm").map((q) => ({ id, q })));
+function affirmation({ id, q }, vraie) {
+  const fausses = q.choix.filter((_, i) => i !== q.reponse);
+  return { id, question: q.texte, prop: vraie ? q.choix[q.reponse] : melanger(fausses)[0], bonne: q.choix[q.reponse], vraie };
+}
+function carteAffirmation(a) {
+  return [h("span", { class: "a-q" }, a.question), h("span", { class: "a-p" }, a.prop)];
+}
 
-function afficherArchives(ensuite) {
-  etat.depuisArchives = 0;
-  sauver();
-  const pris = archivesPossibles().slice(0, 4);
-  const ordre = pris.slice().sort((a, b) => a.date - b.date);
-  let places = pris.map(() => null);
-  let reserve = melanger(pris);
-  const b = nouvelleBande("archives");
-  const zoneRes = h("div", { class: "fragments", role: "group", "aria-label": "Moments à placer" });
-  const liste = h("ol", { class: "frise", "aria-label": "Du plus ancien au plus récent" });
-  const valider = h("button", { class: "gros-bouton valider", type: "button", disabled: true }, "Valider l'ordre");
+function afficherMenteur(ensuite) {
+  const tirage = melanger(affirmationsPossibles()).filter((x, i, t) => t.findIndex((y) => y.id === x.id) === i).slice(0, 3);
+  const faux = Math.floor(Math.random() * 3);
+  const items = tirage.map((t, i) => affirmation(t, i !== faux));
+  const b = nouvelleBande("intermede");
+  const zone = h("div", { class: "affirmations" });
   const fin = h("div");
-  const rendre = () => {
-    vider(zoneRes, reserve.map((m) => h("button", { class: "fragment", type: "button", onclick: () => {
-      const k = places.indexOf(null);
-      if (k < 0) return;
-      places[k] = m;
-      reserve = reserve.filter((x) => x !== m);
-      SONS.porte();
-      rendre();
-    } }, m.texte)));
-    vider(liste, places.map((m, k) => h("li", null,
-      h("span", { class: "num", "aria-hidden": "true" }, k + 1),
-      m ? h("button", { class: "fragment pose", type: "button", "aria-label": `Position ${k + 1} : ${m.texte}. Toucher pour retirer.`, onclick: () => { places[k] = null; reserve.push(m); rendre(); } }, m.texte)
-        : h("span", { class: "vide" }, k === 0 ? "Le plus ancien" : k === places.length - 1 ? "Le plus récent" : "…"))));
-    valider.disabled = places.includes(null);
-  };
-  valider.addEventListener("click", () => {
-    valider.remove();
-    zoneRes.remove();
-    let bons = 0;
-    vider(liste, places.map((m, k) => {
-      const ok = m.id === ordre[k].id;
-      if (ok) bons++;
-      return h("li", { class: ok ? "ok" : "ko" }, h("span", { class: "num", "aria-hidden": "true" }, k + 1),
-        h("div", { class: "fragment pose fige" }, m.texte, h("small", null, `${m.affichage}${ok ? "" : ` · à la place ${ordre.findIndex((o) => o.id === m.id) + 1}`}`)));
-    }));
-    const pts = bons * 15 + (bons === pris.length ? 20 : 0);
-    const r = liste.getBoundingClientRect();
-    if (bons) { SONS.juste(bons); gagner(pts, innerWidth / 2, Math.max(80, r.top)); } else SONS.faux();
-    vider(fin,
-      h("p", { class: "verdict" }, h("b", null, bons === pris.length ? "Sans faute." : `${bons} sur ${pris.length}.`), h("span", { class: "gain" }, pts ? `+${pts} points` : "")),
-      h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
+  items.forEach((a, i) => {
+    zone.append(h("button", { class: "affirmation", type: "button", onclick: () => {
+      if (zone.classList.contains("fini")) return;
+      zone.classList.add("fini");
+      const juste = !a.vraie;
+      [...zone.children].forEach((c, k) => {
+        c.disabled = true;
+        c.classList.add(items[k].vraie ? "vraie" : "fausse");
+        if (!items[k].vraie) c.append(h("span", { class: "a-corr" }, `Mensonge. La bonne réponse : ${items[k].bonne}`));
+      });
+      const r = zone.getBoundingClientRect();
+      if (juste) { combo++; SONS.juste(combo); confettis(innerWidth / 2, r.top + 40, ["#15131A", "#FBF5E9", "#FFC93C"]); gagner(25, innerWidth / 2, r.top); if (partie) { partie.score += 25; partie.bonnes++; } }
+      else { combo = 0; SONS.faux(); zone.classList.add("secoue"); gagner(2); if (partie) partie.score += 2; }
+      if (partie) partie.questions++;
+      vider(fin, h("p", { class: "verdict" }, h("b", null, juste ? "Démasqué." : "Il t'a eu."), h("span", { class: "gain" }, juste ? "+25 points" : "+2 points")),
+        h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
+    } }, carteAffirmation(a)));
   });
   vider(b,
-    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Salle des archives")),
-    h("h1", { class: "question", tabindex: "-1" }, "Remets ces moments dans l'ordre."),
-    h("p", null, "Ils viennent des faits que tu as trouvés. Touche-les du plus ancien au plus récent."),
-    zoneRes, liste, valider, fin);
-  rendre();
+    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "+25")),
+    h("h1", { class: "question", tabindex: "-1" }, "Le menteur"),
+    h("p", { class: "consigne" }, "Ces trois réponses viennent de faits que tu as trouvés. Une seule est fausse : touche-la."),
+    zone, fin);
   allerA(b);
 }
+
+function afficherEclair(ensuite) {
+  const DUREE = 25;
+  const items = melanger(affirmationsPossibles()).slice(0, 8).map((t) => affirmation(t, Math.random() < 0.5));
+  const b = nouvelleBande("intermede eclair");
+  let i = 0, bons = 0, fini = false, debut = 0, raf = 0;
+  const barre = h("i");
+  const chrono = h("div", { class: "chrono" }, barre);
+  const carte = h("div", { class: "eclair-carte", "aria-live": "polite" });
+  const boutons = h("div", { class: "eclair-boutons" });
+  const compteur = h("p", { class: "consigne" });
+  const fin = h("div");
+  const montrer = () => { vider(carte, carteAffirmation(items[i])); compteur.textContent = `${i + 1} / ${items.length} · ${pluriel(bons, "bonne réponse", "bonnes réponses")}`; };
+  const terminer = () => {
+    if (fini) return;
+    fini = true;
+    cancelAnimationFrame(raf);
+    boutons.remove();
+    const pts = bons * 5 + (bons === items.length ? 20 : 0);
+    if (bons) { SONS.juste(bons); gagner(pts, innerWidth / 2, carte.getBoundingClientRect().top); } else SONS.faux();
+    if (partie) { partie.score += pts; partie.questions++; if (bons >= items.length / 2) partie.bonnes++; }
+    vider(carte, h("span", { class: "a-p" }, bons === items.length ? "Sans faute." : `${bons} sur ${items.length}.`));
+    vider(fin, h("p", { class: "verdict" }, h("b", null, pts ? `+${pts} points` : "Raté."), h("span", { class: "gain" }, `${pluriel(bons, "bonne réponse", "bonnes réponses")} en ${DUREE} secondes max`)),
+      h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
+  };
+  const choisir = (v) => {
+    if (fini || !debut) return;
+    const ok = v === items[i].vraie;
+    if (ok) { bons++; note(880 + bons * 40, 0, 0.1, "triangle", 0.12); } else { note(180, 0, 0.15, "square", 0.06); carte.classList.remove("secoue"); void carte.offsetWidth; carte.classList.add("secoue"); }
+    carte.classList.toggle("flash-ok", ok);
+    i++;
+    if (i >= items.length) terminer(); else montrer();
+  };
+  const go = h("button", { class: "gros-bouton", type: "button", onclick: () => {
+    go.remove();
+    vider(boutons,
+      h("button", { class: "gros-bouton", type: "button", "data-touche": "v", onclick: () => choisir(true) }, "Vrai"),
+      h("button", { class: "gros-bouton", type: "button", "data-touche": "f", onclick: () => choisir(false) }, "Faux"));
+    debut = performance.now();
+    montrer();
+    const tic = (t) => {
+      const reste = Math.max(0, 1 - (t - debut) / (DUREE * 1000));
+      barre.style.width = `${reste * 100}%`;
+      if (reste <= 0) terminer(); else raf = requestAnimationFrame(tic);
+    };
+    raf = requestAnimationFrame(tic);
+  } }, "C'est parti");
+  vider(b,
+    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "Chrono")),
+    h("h1", { class: "question", tabindex: "-1" }, "Éclair"),
+    h("p", { class: "consigne" }, `${items.length} réponses de tes faits trouvés, ${DUREE} secondes. Vrai ou faux, le plus vite possible.`),
+    chrono, carte, boutons, go, compteur, fin);
+  allerA(b);
+}
+
+/* ---------- Parties ---------- */
+
+let partie = null;
+const DUREES = [10, 15, 20, 30, 40, 47];
+const estimation = (n) => { const min = Math.max(1, Math.round((n * 25) / 60)); return `≈ ${min} min`; };
+
+function nouvellePartie(total) {
+  etat.longueur = total;
+  sauver();
+  partie = { total: Math.min(total, TOTAL), n: 0, score: 0, bonnes: 0, questions: 0, comboMax: 0, gagnes: [], joues: new Set(), intermedes: 0,
+    seriesAvant: Object.fromEntries(SERIES.map((x) => [x.id, x.ids.filter((id) => etat.trouves[id]).length])) };
+  combo = 0;
+  const depart = choisirDepart();
+  if (depart) afficherFait(depart, $("fil").children.length === 0);
+}
+
+function choixDuree(apres) {
+  const zone = h("div", { class: "durees", role: "radiogroup", "aria-label": "Nombre de questions" });
+  let choisi = etat.longueur;
+  const majChoix = () => zone.querySelectorAll(".duree").forEach((d) => d.setAttribute("aria-checked", String(Number(d.dataset.n) === choisi)));
+  for (const n of DUREES) {
+    zone.append(h("button", { class: "duree", type: "button", role: "radio", "data-n": String(n), onclick: () => { choisi = n; majChoix(); SONS.porte(); } },
+      h("b", null, n === TOTAL ? "Tout" : n), h("span", null, n === TOTAL ? `les ${TOTAL} · ${estimation(n)}` : `questions · ${estimation(n)}`)));
+  }
+  majChoix();
+  const toggle = h("input", { type: "checkbox", id: "proposer" });
+  toggle.checked = etat.proposerDuree;
+  toggle.addEventListener("change", () => { etat.proposerDuree = toggle.checked; sauver(); });
+  return h("div", { class: "choix-duree" }, zone,
+    h("button", { class: "gros-bouton jouer", type: "button", onclick: (e) => { e.currentTarget.disabled = true; apres(choisi); } }, apres.libelle || "Jouer"),
+    h("label", { class: "case-cocher", for: "proposer" }, toggle, " Me proposer la durée au début de chaque visite"));
+}
+
+function finPartie() {
+  const p = partie;
+  const ratio = p.questions ? p.bonnes / p.questions : 0;
+  const cle = String(p.total);
+  const ancien = etat.meilleurs[cle] || 0;
+  const record = p.score > ancien;
+  if (record) { etat.meilleurs[cle] = p.score; sauver(); }
+  const titre = ratio >= 0.9 ? "Légendaire" : ratio >= 0.7 ? "Énorme" : ratio >= 0.5 ? "Bien joué" : "Partie terminée";
+  const b = nouvelleBande("fin-partie");
+  const score = h("span", { class: "score-geant" }, "0");
+  const series = SERIES.map((x) => ({ x, avant: p.seriesAvant[x.id], apres: x.ids.filter((id) => etat.trouves[id]).length })).filter((o) => o.apres > o.avant);
+  const rejouer = (n) => nouvellePartie(n);
+  rejouer.libelle = "Rejouer";
+  vider(b,
+    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, `Partie de ${p.total}`), record ? h("span", { class: "etiq pepite" }, ancien ? "Nouveau record" : "Premier record") : null),
+    h("h1", { class: "question titre-fin", tabindex: "-1" }, titre),
+    h("p", { class: "score-ligne" }, score, h("span", null, "points")),
+    h("ul", { class: "stats" },
+      h("li", null, h("b", null, `${p.bonnes}/${p.questions}`), "bonnes réponses"),
+      h("li", null, h("b", null, p.comboMax), "meilleur combo"),
+      h("li", null, h("b", null, p.gagnes.length), p.gagnes.length > 1 ? "objets gagnés" : "objet gagné"),
+      h("li", null, h("b", null, `${nbTrouves()}/${TOTAL}`), "dans ta collection")),
+    p.gagnes.length ? h("div", { class: "gagnes" }, p.gagnes.map((id) => h("button", { class: "gagne", type: "button", onclick: () => ouvrirObjet(id), "aria-label": `Contempler : ${salleParId[id].nom}` }, imageObjet(salleParId[id].objet)))) : null,
+    series.length ? h("p", { class: "series-avance" }, "Séries qui avancent : ", series.map((o, i) => [h("b", null, `${o.x.nom} ${o.apres}/${o.x.ids.length}`), i < series.length - 1 ? ", " : "."])) : null,
+    ancien && !record ? h("p", { class: "consigne" }, `Ton record sur ${p.total} questions : ${ancien} points.`) : null,
+    h("h2", { class: "sous-titre" }, "On remet ça ?"),
+    choixDuree(rejouer));
+  partie = null;
+  majHud();
+  allerA(b);
+  setTimeout(() => celebrer(ratio, record), reduit() ? 0 : 500);
+  // Le score monte comme dans une borne d'arcade.
+  const t0 = performance.now(), duree = reduit() ? 1 : 1800;
+  const monte = (t) => { const k = Math.min(1, (t - t0) / duree); score.textContent = Math.round(p.score * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(monte); };
+  requestAnimationFrame(monte);
+}
+
+/* ---------- La célébration : air horn et canon à confettis ---------- */
+
+function airHorn(debut = 0) {
+  if (!etat.son) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const coups = [[0, 0.42], [0.5, 0.12], [0.66, 0.12], [0.82, 0.95]];
+    for (const [t0, d] of coups) {
+      const t = audio.currentTime + debut + t0;
+      const filtre = audio.createBiquadFilter();
+      filtre.type = "lowpass"; filtre.frequency.value = 2600; filtre.Q.value = 6;
+      const g = audio.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.11, t + 0.02);
+      g.gain.setValueAtTime(0.11, t + d - 0.05);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      filtre.connect(g).connect(audio.destination);
+      for (const f of [233, 294, 349, 466]) {
+        for (const det of [-9, 9]) {
+          const o = audio.createOscillator();
+          o.type = "sawtooth";
+          o.frequency.setValueAtTime(f * 1.06, t);
+          o.frequency.exponentialRampToValueAtTime(f, t + 0.06);
+          o.detune.value = det;
+          o.connect(filtre);
+          o.start(t);
+          o.stop(t + d + 0.02);
+        }
+      }
+    }
+    // Grosse caisse sous la fanfare.
+    for (const t0 of [0, 0.5, 0.66, 0.82, 1.3, 1.45]) {
+      const t = audio.currentTime + debut + t0;
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(40, t + 0.18);
+      g.gain.setValueAtTime(0.35, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      o.connect(g).connect(audio.destination); o.start(t); o.stop(t + 0.25);
+    }
+  } catch (_) { /* pas de son */ }
+}
+
+function canonConfettis(intensite) {
+  if (reduit()) return;
+  const c = h("canvas", { class: "canon", "aria-hidden": "true" });
+  document.body.append(c);
+  const ctx = c.getContext("2d");
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  c.width = innerWidth * dpr; c.height = innerHeight * dpr;
+  ctx.scale(dpr, dpr);
+  const couleurs = ["#FF5A36", "#B9A6FF", "#FFD23F", "#7FD8BE", "#FF9EC7", "#3D5AFE", "#FBF5E9", "#FFC93C"];
+  const parts = [];
+  const salve = (n) => {
+    for (let i = 0; i < n; i++) {
+      const gauche = i % 2 === 0;
+      const echelle = Math.max(0.7, Math.min(1.3, innerHeight / 800));
+      parts.push({ x: gauche ? -10 : innerWidth + 10, y: innerHeight * 0.85, vx: (gauche ? 1 : -1) * (3 + Math.random() * (innerWidth / 70)), vy: -(13 + Math.random() * 11) * echelle, r: Math.random() * 6, vr: Math.random() * 0.4 - 0.2, w: 7 + Math.random() * 7, hh: 10 + Math.random() * 8, c: couleurs[i % couleurs.length] });
+    }
+  };
+  salve(Math.round(160 * intensite));
+  setTimeout(() => salve(Math.round(120 * intensite)), 500);
+  setTimeout(() => salve(Math.round(180 * intensite)), 820);
+  const t0 = performance.now();
+  const boucle = (t) => {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    for (const p of parts) {
+      p.vy += 0.32; p.vx *= 0.99; p.vy *= 0.99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c;
+      ctx.fillRect(-p.w / 2, -p.hh / 2 * Math.abs(Math.cos(p.r * 2)), p.w, p.hh * Math.abs(Math.cos(p.r * 2)) + 1);
+      ctx.restore();
+    }
+    if (t - t0 < 4200) requestAnimationFrame(boucle); else c.remove();
+  };
+  requestAnimationFrame(boucle);
+}
+
+function celebrer(ratio, record) {
+  const intensite = 0.6 + ratio * 0.9 + (record ? 0.3 : 0);
+  airHorn();
+  if (ratio >= 0.7 || record) airHorn(1.6);
+  canonConfettis(intensite);
+  if (!reduit()) {
+    document.body.classList.remove("seisme"); void document.body.offsetWidth; document.body.classList.add("seisme");
+    const flash = h("div", { class: "flash" });
+    document.body.append(flash);
+    setTimeout(() => flash.remove(), 700);
+  }
+}
+
+/* ---------- Contempler un objet ---------- */
+
+let visionneuse = null;
+async function ouvrirObjet(id) {
+  const dlg = $("dlg-objet");
+  const s = salleParId[id];
+  const scene = h("div", { class: "scene-objet" });
+  vider(dlg,
+    h("div", { class: "t-tete" }, h("div", null, h("h2", null, s.nom), h("p", null, `${serieDe[id].nom} · fais-le tourner, pince ou molette pour zoomer`)),
+      h("button", { class: "fermer", type: "button", onclick: () => dlg.close() }, "Fermer")),
+    scene,
+    etat.trouves[id] ? h("div", { class: "t-corps" }, h("button", { class: "lien-texte", type: "button", onclick: () => { dlg.close(); ouvrirFiche(id); } }, "Relire la fiche")) : null);
+  dlg.showModal();
+  const m = await charger3D();
+  if (!dlg.open) return;
+  if (!m) { scene.append(imageObjet(s.objet, "fiche-img")); return; }
+  if (visionneuse) visionneuse.detruire();
+  visionneuse = new m.Visionneuse(scene, s.objet);
+}
+
 
 /* ---------- Tiroirs ---------- */
 
@@ -534,7 +774,7 @@ function ouvrirFiche(id) {
   vider(dlg,
     tete(s.nom, `${serieDe[id].nom} · trouvé le ${new Date(etat.trouves[id].date + "T12:00").toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}`, dlg),
     h("div", { class: "t-corps fiche" },
-      imageObjet(s.objet, "fiche-img"),
+      h("button", { class: "fiche-objet", type: "button", onclick: () => { dlg.close(); ouvrirObjet(id); }, "aria-label": "Contempler l'objet" }, imageObjet(s.objet, "fiche-img"), h("span", { class: "contempler" }, "Contempler")),
       QUESTIONS[id].map((q) => [
         h("p", { class: "fiche-q" }, q.texte),
         h("p", { class: "fiche-r" }, `Réponse : ${q.type === "vf" ? (q.reponse ? "vrai" : "faux") : q.choix[q.reponse]}`),
@@ -545,9 +785,10 @@ function ouvrirFiche(id) {
   dlg.showModal();
 }
 
-for (const d of ["dlg-collection", "dlg-pistes", "dlg-fiche"]) {
+for (const d of ["dlg-collection", "dlg-pistes", "dlg-fiche", "dlg-objet"]) {
   $(d).addEventListener("click", (e) => { if (e.target === e.currentTarget) e.currentTarget.close(); });
 }
+$("dlg-objet").addEventListener("close", () => { if (visionneuse) { visionneuse.detruire(); visionneuse = null; } });
 $("btn-collection").addEventListener("click", ouvrirCollection);
 $("btn-pistes").addEventListener("click", ouvrirPistes);
 $("btn-niveau").addEventListener("click", () => {
@@ -572,16 +813,35 @@ function appliquerSon() {
 }
 $("btn-son").addEventListener("click", () => { etat.son = !etat.son; sauver(); appliquerSon(); if (etat.son) SONS.porte(); });
 
-/* ---------- Départ : directement dans un fait ---------- */
+/* ---------- Clavier : 1 à 4 pour répondre, V et F en Éclair ---------- */
+
+addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey || document.querySelector("dialog[open]") || !$("annonce").hidden) return;
+  const derniere = $("fil").lastElementChild;
+  if (!derniere) return;
+  if (/^[1-4]$/.test(e.key)) {
+    const reps = derniere.querySelectorAll(".reponses:not(.fini) .rep, .affirmations:not(.fini) .affirmation");
+    const r = reps[Number(e.key) - 1];
+    if (r) { e.preventDefault(); r.click(); }
+  } else if (e.key === "v" || e.key === "f") {
+    const b = derniere.querySelector(`[data-touche="${e.key}"]`);
+    if (b) { e.preventDefault(); b.click(); }
+  }
+});
+
+/* ---------- Départ ---------- */
 
 appliquerTypo();
 appliquerSon();
 majHud();
-const depart = choisirDepart();
-if (depart) afficherFait(depart, true);
-else {
-  const b = nouvelleBande();
-  vider(b, h("h1", { class: "question", tabindex: "-1" }, "Tu as tout trouvé."), h("p", null, "De nouveaux faits arrivent bientôt."),
-    h("button", { class: "gros-bouton", type: "button", onclick: ouvrirCollection }, "Voir ma collection"));
+if (etat.proposerDuree) {
+  const b = nouvelleBande("fin-partie");
+  vider(b,
+    h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, `${nbTrouves()}/${TOTAL} dans ta collection`)),
+    h("h1", { class: "question", tabindex: "-1" }, "Combien de questions ?"),
+    choixDuree((n) => nouvellePartie(n)));
+} else {
+  nouvellePartie(etat.longueur);
 }
 charger3D();
+
