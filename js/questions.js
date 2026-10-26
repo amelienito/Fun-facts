@@ -87,10 +87,6 @@ export const QUESTIONS = {
     type: "qcm", texte: "Où le Grand Incendie de Londres a-t-il démarré, en 1666 ?",
     choix: ["Dans une boulangerie", "Dans une taverne", "Dans une église", "Sur un navire du port"], reponse: 0,
     explication: "Dans la boulangerie de Thomas Farriner, sur Pudding Lane. Ce boulanger était connu pour avoir fourni du pain à la Royal Navy.",
-  }, {
-    type: "qcm", texte: "Et qui a été pendu pour avoir déclenché l'incendie ?",
-    choix: ["Un horloger français", "Le boulanger lui-même", "Un marin hollandais", "Personne"], reponse: 0,
-    explication: "Robert Hubert, un horloger français, qui avait avoué. Farriner et ses enfants ont signé l'acte d'accusation. Pourtant, Hubert n'est arrivé en Angleterre que deux jours après le début du feu. Il est pendu le 27 octobre 1666.",
   }],
   melos: [{
     type: "qcm", texte: "En 416 av. J.-C., l'île de Mélos veut rester neutre et en appelle à la justice. Que lui répond Athènes, selon Thucydide ?",
