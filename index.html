@@ -31,6 +31,20 @@
 <div id="annonce" class="annonce" hidden></div>
 <div id="toasts" class="toasts" aria-live="polite"></div>
 <noscript><p style="padding:80px 18px">Ce site a besoin de JavaScript.</p></noscript>
+<script>
+// Ouvert depuis Instagram, TikTok, Snapchat… ? Une petite bulle invite à passer dans le vrai navigateur.
+(() => {
+  const ua = navigator.userAgent || "";
+  if (!/Instagram|FBAN|FBAV|FB_IAB|Line\/|Twitter|Snapchat|TikTok|musical_ly|Bytedance|LinkedInApp|Pinterest/i.test(ua)) return;
+  try { if (sessionStorage.getItem("ff:navig")) return; } catch (_) {}
+  const b = document.createElement("div");
+  b.className = "bulle-navig";
+  b.setAttribute("role", "status");
+  b.innerHTML = '<p>Pour jouer en grand, touche <b>•••</b> en haut à droite, puis <b>« Ouvrir dans le navigateur »</b>.</p><span class="bn-fleche" aria-hidden="true">↗</span><button type="button" aria-label="Fermer">✕</button>';
+  b.querySelector("button").onclick = () => { b.remove(); try { sessionStorage.setItem("ff:navig", "1"); } catch (_) {} };
+  document.body.append(b);
+})();
+</script>
 <script type="module" src="js/jeu.js"></script>
 </body>
 </html>
