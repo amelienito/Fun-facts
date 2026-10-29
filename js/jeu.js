@@ -31,6 +31,21 @@ const melanger = (a) => {
   }
   return t;
 };
+// Exposants (10⁻¹⁵) : rendus en vrai <sup>, car la police n'a pas ces caractères.
+const SUP = { "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9", "⁻": "-" };
+const riche = (t) => {
+  if (!/[⁰¹²³⁴⁵⁶⁷⁸⁹⁻]/.test(t)) return t;
+  return t.split(/([⁰¹²³⁴⁵⁶⁷⁸⁹⁻]+)/).filter(Boolean).map((m) => (SUP[m[0]] ? h("sup", null, [...m].map((c) => SUP[c]).join("")) : m));
+};
+// Les réponses se lisent comme une phrase : majuscule à la première seulement (les noms propres gardent la leur).
+const COMMUNS = new Set("le la les l' l’ un une des du de d' d’ dans au aux à en elle il ils elles c'est ce cette son sa ses sans très rien aucun aucune une deux trois cinq douze environ vos payez palmées atrophiées noire dorée rouge bleu collant timide sperm killer pilot humpback même".split(" "));
+const premierMot = (t) => (t.match(/^[^\s,]+/) || [""])[0].toLowerCase().replace(/^(l['’]|d['’]).*/, "$1");
+function casse(lib, i, q) {
+  if (q.casse === false || !/^\p{L}/u.test(lib)) return lib;
+  if (i === 0) return lib[0].toUpperCase() + lib.slice(1);
+  return COMMUNS.has(premierMot(lib)) ? lib[0].toLowerCase() + lib.slice(1) : lib;
+}
+const classeQuestion = (t) => `question ${t.length > 110 ? "longue tres-longue" : t.length > 72 ? "longue" : ""}`;
 const pluriel = (n, mot, mots = mot + "s") => `${n} ${n > 1 ? mots : mot}`;
 const reduit = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 const aujourdhui = () => {
@@ -63,6 +78,7 @@ const etat = (() => {
     meilleurs: Object.fromEntries(Object.entries(e.meilleurs || {}).map(([k, v]) => [k, (e.echelle === 50 ? 1 : 50) * v])),
     echelle: 50,
     code: e.code || "",
+    repondues: Array.isArray(e.repondues) ? e.repondues : [],
   };
 })();
 let minuterieNuage = 0;
@@ -336,7 +352,6 @@ function afficherFait(id, premier) {
       estPepite(id) ? h("span", { class: "etiq pepite" }, "Pépite ×2") : null,
       etat.trouves[id] ? h("span", { class: "etiq" }, "Déjà dans ta collection") : null),
     tete, suite);
-  if (partie && partie.n === 1 && partie.prono == null) b.querySelector(".etiquettes").after(blocPronostic());
   poser(s, 0, { b, tete, suite, zoneObjet });
   if (!premier) allerA(b);
   else setTimeout(() => b.querySelector("h1")?.focus({ preventScroll: true }), 50);
@@ -357,14 +372,15 @@ function poser(s, qi, z) {
   z.frise = frise ? blocFrise(frise) : null;
   const reps = h("p", { class: "reponses" });
   opts.forEach(([lib, val], i) => {
-    reps.append(h("button", { class: "rep", type: "button", "data-v": String(val), onclick: (e) => repondre(s, qi, z, reps, e.currentTarget, val) }, lib));
-    if (i < opts.length - 1) reps.append(h("span", { class: "liant" }, i === opts.length - 2 ? " ou " : ", "));
+    const bouton = h("button", { class: "rep", type: "button", "data-v": String(val), onclick: (e) => repondre(s, qi, z, reps, e.currentTarget, val) }, riche(casse(lib, i, q)));
+    const fin = i < opts.length - 2 ? "," : i === opts.length - 1 && q.type === "qcm" ? "\u00A0?" : "";
+    reps.append(h("span", { class: "rep-groupe" }, bouton, fin ? h("span", { class: "liant" }, fin) : null));
+    if (i < opts.length - 1) reps.append(i === opts.length - 2 ? h("span", { class: "liant" }, " ou ") : " ");
   });
-  if (q.type === "qcm") reps.append(h("span", { class: "liant" }, " ?"));
   vider(z.tete,
-    z.zoneObjet,
+    z.zoneObjet, z.passees,
     total > 1 ? h("p", { class: "q-num" }, `Question ${qi + 1} sur ${total}`) : null,
-    h("h1", { class: `question ${q.texte.length > 72 ? "longue" : ""}`, tabindex: "-1" }, q.texte),
+    h("h1", { class: classeQuestion(q.texte), tabindex: "-1" }, riche(q.texte)),
     z.frise,
     reps);
   if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
@@ -415,18 +431,18 @@ function poserMulti(s, qi, z, q, total) {
     repondre(s, qi, z, grille, grille, fautes === 0);
   });
   vider(z.tete,
-    z.zoneObjet,
+    z.zoneObjet, z.passees,
     total > 1 ? h("p", { class: "q-num" }, `Question ${qi + 1} sur ${total}`) : null,
-    h("h1", { class: `question ${q.texte.length > 72 ? "longue" : ""}`, tabindex: "-1" }, q.texte),
+    h("h1", { class: classeQuestion(q.texte), tabindex: "-1" }, riche(q.texte)),
     grille, valider);
   if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
 }
 
 // Sur les frises et les curseurs : dans la tolérance, c'est juste ; jusqu'au double, c'est « presque » (moitié des points, le combo continue).
 const juger = (ecart, tol) => (ecart <= tol ? true : ecart <= tol * 2 ? "presque" : false);
-const entete = (z, q, qi, total) => [z.zoneObjet,
+const entete = (z, q, qi, total) => [z.zoneObjet, z.passees,
   total > 1 ? h("p", { class: "q-num" }, `Question ${qi + 1} sur ${total}`) : null,
-  h("h1", { class: `question ${q.texte.length > 72 ? "longue" : ""}`, tabindex: "-1" }, q.texte)];
+  h("h1", { class: classeQuestion(q.texte), tabindex: "-1" }, riche(q.texte))];
 const anneeTxt = (a) => (a < 0 ? `${Math.round(-a).toLocaleString("fr-FR")} av. J.-C.` : String(Math.round(a)));
 
 // Placer un événement sur la frise : on touche la ligne, on ajuste, on valide.
@@ -515,19 +531,46 @@ function poserTaper(s, qi, z, q, total) {
   const valider = h("button", { class: "gros-bouton", type: "button", disabled: true }, "Valider");
   const secher = h("button", { class: "lien-texte", type: "button" }, "Je sèche");
   const lecture = h("p", { class: "lb-lecture" });
+  let fait = false;
   const finir = (val) => {
-    if (zone.classList.contains("fini")) return;
-    champ.disabled = true; valider.remove(); secher.remove();
+    if (fait) return;
+    fait = true;
+    // On ferme d'abord le clavier du téléphone, pour que le gain s'affiche bien à l'écran.
+    champ.blur();
+    champ.disabled = true; valider.remove(); secher.remove(); clearTimeout(minuterie); indice.hidden = true;
     lecture.textContent = `Réponse : ${q.accepte[0]}.`;
-    repondre(s, qi, z, zone, champ, val);
+    setTimeout(() => repondre(s, qi, z, zone, champ, val), 250);
   };
-  champ.addEventListener("input", () => { valider.disabled = !champ.value.trim(); });
-  champ.addEventListener("keydown", (e) => { if (e.key === "Enter" && champ.value.trim()) { e.preventDefault(); champ.blur(); finir(accepteTape(champ.value, q)); } });
+  // Indice : si rien n'est tapé au bout de 5 secondes, les lettres de la réponse apparaissent en vrac.
+  const indice = h("p", { class: "taper-indice", hidden: true });
+  const lettres = () => { let l; do l = melanger([...q.accepte[0].toUpperCase()]); while (l.join("") === q.accepte[0].toUpperCase() && new Set(l).size > 1); return l; };
+  const montrerIndice = () => {
+    if (zone.classList.contains("fini") || champ.value.trim()) return;
+    vider(indice, h("span", null, "Indice, les lettres en vrac :"), h("span", { class: "taper-lettres" }, lettres().map((c) => h("i", null, c))));
+    indice.hidden = false;
+  };
+  let minuterie = setTimeout(montrerIndice, 5000);
+  champ.addEventListener("input", () => {
+    valider.disabled = !champ.value.trim();
+    clearTimeout(minuterie);
+    if (!champ.value.trim()) minuterie = setTimeout(montrerIndice, 5000);
+  });
+  champ.addEventListener("keydown", (e) => { if (e.key === "Enter" && champ.value.trim()) { e.preventDefault(); finir(accepteTape(champ.value, q)); } });
   valider.addEventListener("click", () => finir(accepteTape(champ.value, q)));
   secher.addEventListener("click", () => finir(false));
-  vider(zone, q.indice ? h("p", { class: "taper-indice" }, q.indice) : null, champ, lecture, h("div", { class: "taper-actions" }, valider, secher));
+  vider(zone, champ, indice, lecture, h("div", { class: "taper-actions" }, valider, secher));
   vider(z.tete, entete(z, q, qi, total), zone);
   if (qi > 0) z.tete.querySelector("h1").focus({ preventScroll: true });
+}
+
+// La question d'avant reste consultable, repliée au-dessus de la suivante.
+function replier(z, q, qi, juste, presque) {
+  const bonne = q.type === "qcm" ? q.choix[q.reponse] : q.type === "vf" ? (q.reponse ? "Vrai" : "Faux") : q.type === "taper" ? q.accepte[0] : q.type === "multi" ? q.bonnes.map((i) => q.choix[i]).join(", ") : q.valTexte || `${q.val.toLocaleString("fr-FR")}${q.unite ? " " + q.unite : ""}`;
+  const d = h("details", { class: "q-passee" },
+    h("summary", null, h("span", { class: "qp-num" }, `Question ${qi + 1} ${presque ? "≈" : juste ? "✓" : "✗"}`), h("span", { class: "qp-texte" }, riche(q.texte))),
+    h("p", { class: "qp-rep" }, h("b", null, "Réponse : "), riche(bonne)),
+    h("p", null, riche(q.explication)));
+  z.passees = [...(z.passees || []), d];
 }
 
 function repondre(s, qi, z, reps, bouton, val) {
@@ -537,6 +580,8 @@ function repondre(s, qi, z, reps, bouton, val) {
   const q = QUESTIONS[s.id][qi];
   const special = ["multi", "placer", "estimer", "taper"].includes(q.type);
   const presque = val === "presque";
+  const cleQ = `${s.id}:${qi}`;
+  if (!etat.repondues.includes(cleQ)) { etat.repondues.push(cleQ); sauver(); }
   const juste = special ? val === true || presque : val === q.reponse;
   if (!special) for (const x of reps.querySelectorAll(".rep")) {
     const v = x.dataset.v === "true" ? true : x.dataset.v === "false" ? false : Number(x.dataset.v);
@@ -547,7 +592,7 @@ function repondre(s, qi, z, reps, bouton, val) {
   const r = bouton.getBoundingClientRect();
   let gain;
   if (juste) {
-    gain = 1000 * multiplicateur() * (estPepite(s.id) ? 2 : 1) * (presque ? 0.5 : 1);
+    gain = 1000 * multiplicateur() * (estPepite(s.id) ? 2 : 1) * (presque ? 0.75 : 1);
     combo++;
     etat.record = Math.max(etat.record, combo);
     SONS.juste(combo);
@@ -558,7 +603,7 @@ function repondre(s, qi, z, reps, bouton, val) {
     if (estPepite(s.id)) setTimeout(SONS.pepite, 160);
     confettis(r.left + r.width / 2, r.top + r.height / 2, estPepite(s.id) ? ["#FFC93C", "#FFE08A", "#FFF4D0"] : ["#15131A", "#FBF5E9", "#FFC93C", "#3D5AFE"]);
   } else {
-    gain = 200;
+    gain = 300;
     combo = 0;
     SONS.faux();
     reps.classList.add("secoue");
@@ -573,7 +618,6 @@ function repondre(s, qi, z, reps, bouton, val) {
 
   const statJoueurs = h("span", { class: "stat-joueurs" });
   if (nuage.actif) {
-    const cleQ = `${s.id}:${qi}`;
     nuage.statsDe(cleQ).then((st) => {
       if (st && st.total >= 5) statJoueurs.textContent = `${Math.round((st.justes / st.total) * 100)} % des joueurs ont trouvé`;
       else if (st) statJoueurs.textContent = "Tu fais partie des premiers à répondre";
@@ -583,11 +627,11 @@ function repondre(s, qi, z, reps, bouton, val) {
   const titre = presque ? "Presque !" : juste ? "Bien vu." : "Raté.";
   const lignes = [
     h("p", { class: "verdict" }, h("b", null, titre), statJoueurs, h("span", { class: "gain" }, juste ? `+${gain.toLocaleString("fr-FR")} points${multiplicateur() > 1 && combo > 1 ? ` · combo de ${combo}` : ""}` : `+${gain} points pour avoir appris quelque chose`)),
-    h("p", null, q.explication),
+    h("p", null, riche(q.explication)),
   ];
   const total = QUESTIONS[s.id].length;
   if (qi < total - 1) {
-    vider(z.suite, lignes, h("button", { class: "gros-bouton", type: "button", onclick: () => { z.suite.hidden = true; poser(s, qi + 1, z); } }, "Question suivante"));
+    vider(z.suite, lignes, h("button", { class: "gros-bouton", type: "button", onclick: () => { z.suite.hidden = true; replier(z, q, qi, juste, presque); poser(s, qi + 1, z); } }, "Question suivante"));
     z.suite.hidden = false;
     return;
   }
@@ -728,24 +772,28 @@ function suivant(id) {
 /* ---------- Intermèdes : Éclair, Plus ou moins, Les paires ---------- */
 
 const marquerJoues = (ids) => { if (partie) for (const i of ids) partie.inter.add(i); };
-const nombresVus = (exclu) => NOMBRES.filter((n) => etat.trouves[n.id] && n.id !== exclu);
-const pairesVues = (exclu) => PAIRES.filter((p) => etat.trouves[p.id] && p.id !== exclu);
+// Jamais de spoil : un intermède ne pioche que dans des questions auxquelles on a déjà répondu.
+const dejaRepondu = (id, qi) => etat.repondues.includes(`${id}:${qi}`);
+const salleRepondue = (id) => !!QUESTIONS[id] && QUESTIONS[id].every((_, qi) => dejaRepondu(id, qi));
+const nombresVus = (exclu) => NOMBRES.filter((n) => salleRepondue(n.id) && n.id !== exclu);
+const pairesVues = (exclu) => PAIRES.filter((p) => salleRepondue(p.id) && p.id !== exclu);
 
 // Une affirmation = une question déjà trouvée + une réponse proposée (la bonne ou une fausse).
-const affirmationsPossibles = (exclu) => Object.keys(etat.trouves).filter((id) => salleParId[id] && id !== exclu).flatMap((id) => QUESTIONS[id].filter((q) => q.type === "qcm" && q.choix.length > 2).map((q) => ({ id, q })));
+const affirmationsPossibles = (exclu) => Object.keys(QUESTIONS).filter((id) => salleParId[id] && id !== exclu).flatMap((id) => QUESTIONS[id].map((q, qi) => ({ id, q, qi })).filter(({ q, qi }) => q.type === "qcm" && q.choix.length > 2 && dejaRepondu(id, qi)));
 function affirmation({ id, q }, vraie) {
   const fausses = q.choix.filter((_, i) => i !== q.reponse);
   return { id, question: q.texte, prop: vraie ? q.choix[q.reponse] : melanger(fausses)[0], bonne: q.choix[q.reponse], vraie };
 }
 function carteAffirmation(a) {
-  return [h("span", { class: "a-q" }, a.question), h("span", { class: "a-p" }, a.prop)];
+  return [h("span", { class: "a-q" }, riche(a.question)), h("span", { class: "a-p" }, riche(a.prop))];
 }
 
 
 // Plus ou moins : un chiffre connu, un chiffre caché. Le caché est-il plus grand ou plus petit ?
 function afficherPlusOuMoins(ensuite, exclu) {
   const pool = melanger(nombresVus(exclu));
-  const chaine = pool.slice(0, Math.min(6, pool.length));
+  const chaine = [];
+  for (const n of pool) if (chaine.length < 6 && !chaine.some((c) => c.val === n.val)) chaine.push(n);
   marquerJoues(chaine.map((n) => n.id));
   const MANCHES = chaine.length - 1;
   const b = nouvelleBande("intermede inter-pom");
@@ -772,9 +820,10 @@ function afficherPlusOuMoins(ensuite, exclu) {
       setTimeout(() => (k < MANCHES ? manche() : terminer()), 1500);
     };
     vider(choix,
-      h("button", { class: "gros-bouton", type: "button", "data-touche": "v", onclick: () => juger(true) }, "Plus"),
-      h("button", { class: "gros-bouton", type: "button", "data-touche": "f", onclick: () => juger(false) }, "Moins"));
-    vider(scene, h("p", { class: "consigne" }, `Manche ${k + 1} sur ${MANCHES}`), carteN(a), h("p", { class: "pom-vs" }, "contre"), droite, choix);
+      h("button", { class: "gros-bouton", type: "button", "data-touche": "v", onclick: () => juger(true) }, `↑ Plus de ${fmt(a)}`),
+      h("button", { class: "gros-bouton", type: "button", "data-touche": "f", onclick: () => juger(false) }, `↓ Moins de ${fmt(a)}`));
+    vider(scene, h("p", { class: "consigne" }, `Manche ${k + 1} sur ${MANCHES}`), carteN(a),
+      h("p", { class: "pom-question" }, "Et ça, c'est plus ou moins que ", h("b", null, fmt(a)), " ?"), droite, choix);
   };
   const terminer = () => {
     const pts = Math.max(200, bons * 1000 + (bons === MANCHES ? 2000 : 0));
@@ -787,7 +836,7 @@ function afficherPlusOuMoins(ensuite, exclu) {
   vider(b,
     h("div", { class: "etiquettes" }, h("span", { class: "etiq" }, "Intermède"), h("span", { class: "etiq pepite" }, "Sans faute : +2 000")),
     h("h1", { class: "question", tabindex: "-1" }, "Plus ou moins"),
-    h("p", { class: "consigne" }, "Le chiffre caché est-il plus grand ou plus petit que celui d'au-dessus ?"),
+    h("p", { class: "consigne" }, "Un nombre est donné. Devine si le suivant est plus grand ou plus petit."),
     scene, fin);
   manche();
   allerA(b);
@@ -866,7 +915,7 @@ function afficherEclair(ensuite, exclu) {
     if (partie) { partie.score += pts; partie.questions++; if (bons >= items.length / 2) partie.bonnes++; }
     vider(carte, h("span", { class: "a-p" }, bons === items.length ? "Sans faute." : `${bons} sur ${items.length}.`));
     carte.after(h("ol", { class: "recap" }, items.slice(0, reponses.length).map((a, k) => h("li", { class: reponses[k] ? "ok" : "ko" },
-      h("span", { class: "a-q" }, a.question), h("span", null, `Réponse : ${a.bonne}`)))));
+      h("span", { class: "a-q" }, riche(a.question)), h("span", null, "Réponse : ", riche(a.bonne))))));
     vider(fin, h("p", { class: "verdict" }, h("b", null, bons ? `+${pts.toLocaleString("fr-FR")} points` : `+${pts} points`), h("span", { class: "gain" }, `${pluriel(bons, "bonne réponse", "bonnes réponses")} en ${DUREE} secondes max`)),
       h("button", { class: "gros-bouton", type: "button", onclick: ensuite }, "Reprendre le terrier"));
   };
@@ -1167,7 +1216,7 @@ function ouvrirFiche(id) {
       h("button", { class: "fiche-objet", type: "button", onclick: () => { dlg.close(); ouvrirObjet(id); }, "aria-label": "Contempler l'objet" }, imageObjet(s.objet, "fiche-img"), h("span", { class: "contempler" }, "Contempler")),
       QUESTIONS[id].map((q) => [
         h("p", { class: "fiche-q" }, q.texte),
-        h("p", { class: "fiche-r" }, `Réponse : ${q.type === "vf" ? (q.reponse ? "vrai" : "faux") : q.type === "multi" ? q.bonnes.map((i) => q.choix[i]).join(", ") : q.type === "placer" ? q.valTexte : q.type === "estimer" ? `${q.val} ${q.unite}` : q.choix[q.reponse]}`),
+        h("p", { class: "fiche-r" }, "Réponse : ", riche(q.type === "vf" ? (q.reponse ? "vrai" : "faux") : q.type === "multi" ? q.bonnes.map((i) => q.choix[i]).join(", ") : q.type === "placer" ? q.valTexte : q.type === "estimer" ? `${q.val} ${q.unite}` : q.type === "taper" ? q.accepte[0] : q.choix[q.reponse])),
         h("p", null, q.explication)]),
       s.saviezVous ? h("p", { class: "saviez" }, h("b", null, "Le saviez-vous ?"), s.saviezVous) : null,
       blocSources(s.sources)));

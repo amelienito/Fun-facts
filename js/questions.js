@@ -9,9 +9,9 @@ export const QUESTIONS = {
     explication: "Faux. Les neurologues sont formels : on utilise pratiquement toutes les parties du cerveau. L'imagerie montre que la plupart des régions sont actives au cours d'une journée, même pendant le sommeil.",
   }],
   cleopatre: [{
-    type: "qcm", texte: "De quoi Cléopâtre est-elle la plus proche dans le temps ?",
-    choix: ["Du premier iPhone", "De la construction de la grande pyramide"], reponse: 0,
-    explication: "Du premier iPhone. La grande pyramide est achevée au début du XXVe siècle av. J.-C., Cléopâtre naît en 70 ou 69 av. J.-C., et l'iPhone est présenté le 9 janvier 2007. Environ 2 400 à 2 500 ans d'un côté, environ 2 075 de l'autre.",
+    type: "qcm", texte: "Combien d'années séparent la construction de la grande pyramide de Gizeh et la naissance de Cléopâtre ?", ordre: true,
+    choix: ["Environ 500 ans", "Environ 1 000 ans", "Environ 2 500 ans", "Environ 4 000 ans"], reponse: 2,
+    explication: "Environ 2 500 ans. La pyramide est achevée au début du XXVe siècle av. J.-C., Cléopâtre naît en 70 ou 69 av. J.-C. Elle est donc plus proche du premier iPhone (2007, environ 2 075 ans plus tard) que de la pyramide.",
   }],
   requins: [{
     type: "qcm", texte: "Qui est apparu en premier sur Terre ?",
@@ -60,7 +60,7 @@ export const QUESTIONS = {
     explication: "Un ours blanc et un grizzli. Ces hybrides existent aussi à l'état sauvage : des individus ont été observés et confirmés par des analyses génétiques dans l'Arctique canadien.",
   }],
   dragonnier: [{
-    type: "qcm", texte: "De quelle couleur est la résine du dragonnier de Socotra ?",
+    type: "qcm", texte: "Quand on entaille le tronc du dragonnier, un arbre de l'île de Socotra, de quelle couleur est la résine qui en coule ?",
     choix: ["Rouge sang", "Bleu nuit", "Noire", "Dorée"], reponse: 0,
     explication: "Rouge sang. Cette résine, appelée « sang-de-dragon », sert depuis l'Antiquité de colorant et de remède. L'arbre ne pousse que sur l'île yéménite de Socotra.",
   }],
@@ -90,7 +90,7 @@ export const QUESTIONS = {
     explication: "Dans la boulangerie de Thomas Farriner, sur Pudding Lane. Ce boulanger était connu pour avoir fourni du pain à la Royal Navy.",
   }],
   melos: [{
-    type: "qcm", texte: "Dans le « dialogue mélien » de Thucydide, les habitants de l'île de Mélos invoquent la justice pour rester neutres. Que leur répondent les Athéniens ?",
+    type: "qcm", texte: "Le « dialogue mélien » : l'île de Mélos invoque la justice pour rester neutre. Que lui répond Athènes ?",
     choix: ["La justice ne vaut qu'entre égaux", "Un oracle a ordonné votre chute", "Vos ancêtres ont trahi Athènes", "Payez et vous serez épargnés"], reponse: 0,
     explication: "Que la justice ne vaut qu'entre égaux : les forts font ce qu'ils peuvent, les faibles subissent ce qu'ils doivent. Thucydide reconstitue cette négociation de 416 av. J.-C., un texte encore étudié en relations internationales.",
   }],
@@ -98,11 +98,6 @@ export const QUESTIONS = {
     type: "qcm", texte: "Dans quelle ville la FIFA a-t-elle été fondée, en 1904 ?",
     choix: ["Paris", "Londres", "Zurich", "Bruxelles"], reponse: 0,
     explication: "À Paris, le 21 mai 1904, au 229 rue Saint-Honoré. La France, la Belgique, le Danemark, les Pays-Bas et la Suisse étaient présents ; l'Angleterre ne l'a rejointe qu'en 1905.",
-  }],
-  dexaie: [{
-    type: "qcm", texte: "« Dex aïe ! », le cri de guerre des chevaliers normands, voulait dire…",
-    choix: ["« Dieu, notre aide ! »", "« Dieu le veut ! »", "« Aïe, mon Dieu ! »", "« En avant, Normandie ! »"], reponse: 0,
-    explication: "« Dieu, notre aide ! ». Les chevaliers normands le lançaient sur les champs de bataille d'Europe et du Proche-Orient, pour signaler leur présence et leur origine.",
   }],
   statue: [{
     type: "qcm", texte: "Quelle est la plus grande statue du monde ?",
@@ -134,7 +129,7 @@ export const QUESTIONS = {
     explication: "Zdzisław Beksiński, avec un « ł » barré et un « ń » accentué.",
   }],
   quebec: [{
-    type: "qcm", texte: "Sous quel titre la comédie Le Plus Escroc des deux (1988) est-elle sortie au Québec ?",
+    type: "qcm", casse: false, texte: "Sous quel titre la comédie Le Plus Escroc des deux (1988) est-elle sortie au Québec ?",
     choix: ["Deux fils de pute", "Deux beaux salauds", "Sales Escrocs", "Les Deux Arnaqueurs"], reponse: 0,
     explication: "« Deux fils de pute ». Le film de Frank Oz, avec Steve Martin et Michael Caine, s'appelle Dirty Rotten Scoundrels en version originale.",
   }],
@@ -154,7 +149,7 @@ export const QUESTIONS = {
     explication: "C'est son neveu : son père, August Coppola, est le frère de Francis Ford Coppola. Nicolas Cage, né Nicolas Coppola, est donc le cousin germain de Sofia Coppola.",
   }],
   trump: [{
-    type: "qcm", texte: "Dans quel film de Noël Donald Trump fait-il une apparition ?",
+    type: "qcm", casse: false, texte: "Dans quel film de Noël Donald Trump fait-il une apparition ?",
     choix: ["Maman, j'ai encore raté l'avion", "Love Actually", "Elf", "Le Grinch"], reponse: 0,
     explication: "Maman, j'ai encore raté l'avion (1992). Il croise Kevin dans le hall de l'hôtel Plaza, qui lui appartenait. Selon le réalisateur Chris Columbus, cette apparition était la condition pour tourner dans l'hôtel.",
   }, {
@@ -173,14 +168,9 @@ export const QUESTIONS = {
     choix: ["Wrong Organ", "Critical Reflex", "Puppet Combo", "Team Cherry"], reponse: 0,
     explication: "Wrong Organ. Critical Reflex en est l'éditeur, ce qui explique que son nom apparaisse souvent à côté de celui du jeu.",
   }],
-  forhonor: [{
-    type: "qcm", texte: "D'où vient l'idée du jeu de combat For Honor ?",
-    choix: ["D'un cours d'épée longue allemande", "D'un documentaire sur les samouraïs", "D'une reconstitution médiévale au Québec", "D'un tournoi de kendo à Tokyo"], reponse: 0,
-    explication: "D'un cours d'épée longue allemande : son directeur créatif, Jason VandenBerghe, voulait reproduire ces gardes avec le stick droit de la manette.",
-  }],
   ecureuil: [{
     type: "qcm", texte: "Squirrel with a Gun (« écureuil avec un flingue »), c'est…",
-    choix: ["Un vrai jeu vidéo", "Un faux jeu inventé pour un mème", "Un court-métrage Pixar", "Une bande dessinée de Gotlib"], reponse: 0,
+    choix: ["Un vrai jeu vidéo", "Un faux jeu inventé pour un mème", "Un court-métrage Pixar", "Une bande dessinée de Pénélope Bagieux"], reponse: 0,
     explication: "Un vrai jeu vidéo, sorti en 2024 : développé par Dee Dee Creations et édité par Maximum Entertainment, il est sorti sur PC le 29 août 2024. On y incarne, comme promis, un écureuil armé.",
   }],
   justin: [{
@@ -189,7 +179,7 @@ export const QUESTIONS = {
     explication: "Justin.tv. Twitch en était la catégorie « jeux vidéo », qui attirait plus de spectateurs que toutes les autres réunies. Elle est devenue un service à part en 2011.",
   }],
   eswc: [{
-    type: "qcm", texte: "En quelle année la Coupe du monde des jeux vidéo (ESWC) a-t-elle organisé son premier tournoi de Counter-Strike 100 % féminin ?", ordre: true,
+    type: "qcm", texte: "En quelle année la Coupe du monde des jeux vidéo (ESWC) a-t-elle lancé un tournoi Counter-Strike 100 % féminin ?", ordre: true,
     choix: ["2003", "2009", "2015", "2021"], reponse: 0,
     explication: "En 2003, dès la toute première édition de l'ESWC : huit équipes invitées.",
   }, {
@@ -242,11 +232,6 @@ export const QUESTIONS = {
     choix: ["C'est un désastre complet", "Il fait un froid glacial", "C'est la fête", "C'est très loin"], reponse: 0,
     explication: "C'est un désastre. L'expression vient de la Bérézina, rivière de l'actuelle Biélorussie, que l'armée de Napoléon a franchie en novembre 1812 au prix de très lourdes pertes.",
   }],
-  noosphere: [{
-    type: "qcm", texte: "La « noosphère », c'est…",
-    choix: ["La sphère de la pensée humaine", "Une couche de l'atmosphère", "Une partie de l'œil", "Une figure de géométrie"], reponse: 0,
-    explication: "La sphère de la pensée humaine : l'idée que la pensée et les connaissances humaines forment une couche qui enveloppe la Terre, comme la biosphère. Le mot vient du grec noos, « esprit ».",
-  }],
   poioumenon: [{
     type: "qcm", texte: "Un « poioumenon », c'est…",
     choix: ["Une œuvre qui raconte sa propre création", "Un poème qui ne rime jamais", "Un personnage qui n'apparaît qu'une fois", "Une erreur de traduction célèbre"], reponse: 0,
@@ -264,7 +249,7 @@ export const QUESTIONS = {
   }],
   naute: [{
     type: "taper", texte: "Astronaute pour les Américains, cosmonaute pour les Russes… et pour les Français ?",
-    indice: "S _ _ _ _ _ _ _ _ _ _", accepte: ["Spationaute"],
+    accepte: ["Spationaute"],
     explication: "Spationaute. Et pour les Chinois, on parle de taïkonaute. Selon le Larousse, ces distinctions s'effacent avec les équipages internationaux, et « astronaute » s'impose de plus en plus pour tout le monde.",
   }],
   albanais: [{
@@ -279,7 +264,7 @@ export const QUESTIONS = {
   }],
   nessie: [{
     type: "taper", texte: "Comment surnomme-t-on le monstre du loch Ness ?",
-    indice: "N _ _ _ _ _", accepte: ["Nessie"],
+    accepte: ["Nessie"],
     explication: "Nessie, tout simplement, d'après le nom du lac.",
   }, {
     type: "qcm", texte: "La plus célèbre photo de Nessie, publiée en 1934, montrait en réalité…",
@@ -303,7 +288,7 @@ export const QUESTIONS = {
   }],
   lej: [{
     type: "taper", texte: "Après la victoire des Bleus au Mondial 2018, le trio L.E.J sort un hymne : « Liberté, Égalité… » ?",
-    indice: "M _ _ _ _ _", accepte: ["Mbappé"],
+    accepte: ["Mbappé"],
     explication: "Mbappé ! Le clip « Liberté, Égalité, Mbappé » sort fin juillet 2018, pour le meilleur jeune joueur du Mondial, 19 ans à l'époque.",
   }],
 };
@@ -313,13 +298,13 @@ export const SERIES = [
   { id: "vivant", nom: "Le vivant", ids: ["coucou", "hiboux", "pizzly", "dragonnier", "cachalot", "requins", "ankylosaure"] },
   { id: "corps", nom: "Le corps", ids: ["cerveau", "etrier", "eigengrau"] },
   { id: "physique", nom: "Physique", ids: ["tumbler", "femto", "eiffel"] },
-  { id: "histoire", nom: "Histoire", ids: ["farriner", "melos", "dexaie", "cleopatre", "nessie"] },
+  { id: "histoire", nom: "Histoire", ids: ["farriner", "melos", "cleopatre", "nessie"] },
   { id: "arts", nom: "Beaux-arts", ids: ["bosch", "bocklin", "droste", "beksinski", "statue"] },
   { id: "ecrans", nom: "Écrans", ids: ["quebec", "katerine", "cage", "trump", "mclain"] },
-  { id: "manettes", nom: "Manettes", ids: ["mouthwashing", "forhonor", "ecureuil", "justin", "nintendo", "eswc"] },
+  { id: "manettes", nom: "Manettes", ids: ["mouthwashing", "ecureuil", "justin", "nintendo", "eswc"] },
   { id: "stades", nom: "Stades", ids: ["zidane", "baseball", "fifa", "lej"] },
   { id: "disques", nom: "Disques", ids: ["around", "bestof", "ritz", "zoubida", "grenoble", "simpsonwave"] },
-  { id: "mots", nom: "Dictionnaire", ids: ["glabre", "laudatif", "berezina", "noosphere", "poioumenon", "manicule", "naute", "albanais", "charolais", "cadratin"] },
+  { id: "mots", nom: "Dictionnaire", ids: ["glabre", "laudatif", "berezina", "poioumenon", "manicule", "naute", "albanais", "charolais", "cadratin"] },
 ];
 
 // Pépites : les faits les plus étonnants, qui rapportent double.
@@ -355,7 +340,7 @@ export const FRISES = {
 // Intermède « Plus ou moins » : chiffres tirés des explications déjà vérifiées.
 export const NOMBRES = [
   { id: "baseball", libelle: "matchs par équipe dans une saison régulière de MLB", val: 162 },
-  { id: "around", libelle: "« Around the world » dans le morceau de Daft Punk", val: 144 },
+  { id: "around", libelle: "fois « Around the world » dans le morceau de Daft Punk", val: 144 },
   { id: "zoubida", libelle: "semaines de La Zoubida à la première place des ventes", val: 11 },
   { id: "bocklin", libelle: "versions de L'Île des morts peintes par Böcklin", val: 5 },
   { id: "statue", libelle: "mètres de haut pour la statue de l'Unité (sans socle)", val: 182 },
@@ -370,7 +355,6 @@ export const PAIRES = [
   { id: "glabre", mot: "Glabre", def: "Sans poils" },
   { id: "laudatif", mot: "Laudatif", def: "Qui fait l'éloge de quelqu'un" },
   { id: "berezina", mot: "Bérézina", def: "Un désastre complet" },
-  { id: "noosphere", mot: "Noosphère", def: "La sphère de la pensée humaine" },
   { id: "poioumenon", mot: "Poioumenon", def: "Une œuvre qui raconte sa propre création" },
   { id: "manicule", mot: "Manicule", def: "La petite main à l'index tendu ☞" },
   { id: "eigengrau", mot: "Eigengrau", def: "Le gris que l'œil voit dans le noir total" },

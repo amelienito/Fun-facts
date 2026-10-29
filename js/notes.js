@@ -224,19 +224,6 @@ export const SALLES_NOTES = [
     liens: [{ vers: "baseball", porte: "De l'autre côté de l'Atlantique, un autre sport" }, { vers: "zidane", porte: "Un enfant de Marseille" }],
   },
 
-  {
-    id: "dexaie", cat: "histoire", objet: "bouclier", nom: "Bouclier normand",
-    porte: "Un cri qui traversait les champs de bataille",
-    questions: [
-      {
-        type: "qcm", texte: "Que criaient les chevaliers normands en partant au combat ?",
-        choix: ["« Dex aïe ! »", "« Montjoie ! »", "« Saint-Georges ! »", "« Santiago ! »"], reponse: 0,
-        explication: "« Dex aïe ! », c'est-à-dire « Dieu, notre aide ! ». Les chevaliers normands le lançaient sur les champs de bataille d'Europe et du Proche-Orient, pour signaler leur présence et leur origine. Parmi les Français, ils étaient les seuls à revendiquer par leur cri un lien particulier avec Dieu.",
-      },
-    ],
-    sources: [S.htNormands],
-    liens: [{ vers: "melos", porte: "Une autre guerre, bien plus ancienne" }],
-  },
 
   /* ---------- Art ---------- */
   {
@@ -396,20 +383,7 @@ export const SALLES_NOTES = [
       },
     ],
     sources: [S.gdMouth],
-    liens: [{ vers: "forhonor", porte: "Une idée refusée pendant des années" }],
-  },
-  {
-    id: "forhonor", cat: "pop", objet: "manette:acier", nom: "Manette de chevalier",
-    porte: "Un cours d'escrime et beaucoup de refus",
-    questions: [
-      {
-        type: "vf", texte: "L'idée du jeu For Honor est née d'un cours d'épée longue allemande.", reponse: true,
-        explication: "Son directeur créatif, Jason VandenBerghe, a eu l'idée après avoir suivi un cours d'épée longue allemande : il voulait reproduire ces gardes avec le stick droit de la manette.",
-      },
-    ],
-    saviezVous: "Il a présenté son idée pendant des années sans convaincre : la réponse a été « non » pendant environ une décennie, avant qu'Ubisoft Montréal ne se lance. Le jeu est sorti en 2017.",
-    sources: [S.pcgHonor],
-    liens: [{ vers: "ecureuil", porte: "Un jeu au titre très littéral" }],
+    liens: [{ vers: "ecureuil", porte: "Un jeu au nom improbable" }],
   },
   {
     id: "ecureuil", cat: "pop", objet: "manette:roux", nom: "Manette rousse",
@@ -560,21 +534,7 @@ export const SALLES_NOTES = [
       },
     ],
     sources: [S.larousseBerezina],
-    liens: [{ vers: "noosphere", porte: "Une sphère que personne ne voit" }],
-  },
-  {
-    id: "noosphere", cat: "mots", objet: "livre:violet", nom: "Dictionnaire, tome N",
-    porte: "Une sphère que personne ne voit",
-    questions: [
-      {
-        type: "qcm", texte: "La « noosphère », c'est…",
-        choix: ["Une couche de l'atmosphère", "La sphère de la pensée humaine", "Une partie de l'œil", "Une figure de géométrie"], reponse: 1,
-        explication: "La sphère de la pensée humaine : l'idée que la pensée et les connaissances humaines forment une couche qui enveloppe la Terre, au même titre que la biosphère. Le mot vient du grec noos, « esprit ».",
-      },
-    ],
-    saviezVous: "Le concept est associé au paléontologue et philosophe Pierre Teilhard de Chardin et au scientifique russe Vladimir Vernadsky, dans les années 1920.",
-    sources: [S.wikiNoo],
-    liens: [{ vers: "poioumenon", porte: "Un mot grec encore plus rare" }],
+    liens: [{ vers: "poioumenon", porte: "Un mot grec pour les écrivains" }],
   },
   {
     id: "poioumenon", cat: "mots", objet: "livre:noir", nom: "Livre qui s'écrit lui-même",
@@ -704,7 +664,6 @@ export const FRISE_NOTES = [
   { id: "homework", texte: "La sortie de Homework, l'album de « Around the World »", date: 1997, affichage: "1997", salle: "around", source: S.songfacts },
   { id: "bestof", texte: "La sortie de The Best of Both Worlds", date: 2002, affichage: "2002", salle: "bestof", source: S.slantBest },
   { id: "twitch", texte: "Twitch devient un service à part entière", date: 2011, affichage: "2011", salle: "justin", source: S.tcJustin },
-  { id: "honor", texte: "La sortie de For Honor", date: 2017, affichage: "2017", salle: "forhonor", source: S.pcgHonor },
   { id: "unite", texte: "L'inauguration de la statue de l'Unité", date: 2018, affichage: "2018", salle: "statue", source: S.wikiStatue },
   { id: "ecureuil", texte: "La sortie de Squirrel with a Gun", date: 2024, affichage: "2024", salle: "ecureuil", source: S.gematsuEcureuil },
 ];

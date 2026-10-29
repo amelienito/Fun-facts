@@ -37,7 +37,7 @@ async ({skill, ctl}) => {
   }
   // question en cours ?
   const h1 = last.querySelector('h1.question');
-  const ouverte = last.querySelector('.reponses:not(.fini) .rep, .multi:not(.fini), .placer:not(.fini), .estimer:not(.fini), .taper:not(.fini)');
+  const ouverte = last.querySelector('.reponses:not(.fini) .rep, .multi:not(.fini), .placer:not(.fini), .estimer:not(.fini), .taper:not(.fini) .taper-champ:not([disabled])');
   if (h1 && ouverte && !last.querySelector('.suite:not([hidden]) .verdict')) {
     const info = window.__idx[h1.textContent.replace(/[\s\u202F\u00A0]/g,'')];
     if (!info) return {k:'inconnue', texte: h1.textContent, ...out};
