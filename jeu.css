@@ -22,7 +22,7 @@
 html[data-typo="fraunces"] {
   --titre: "Fraunces", Georgia, serif;
   --titre-graisse: 800;
-  --titre-taille: clamp(1.75rem, 7vw, 4.2rem);
+  --titre-taille: clamp(1.89rem, 7.56vw, 4.54rem);
   --titre-interligne: 1;
   --titre-approche: -0.015em;
   --titre-variation: "SOFT" 100, "WONK" 1, "opsz" 144;
